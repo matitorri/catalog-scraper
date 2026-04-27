@@ -45,4 +45,24 @@
 - Ninguno
 
 ### Diferido a Fase 3
-- Por definir
+- `manufacturers/mercruiser.py` — Mercury Marine (mercruiserparts.com)
+
+---
+
+## Fase 3 — Mercury Marine (2026-04-27)
+
+### Nuevo
+- `manufacturers/mercruiser.py` — config Mercury Marine 350 MAG MPI Alpha/Bravo; navegación mercruiserparts.com (5 niveles): variante → serial ranges → subsistemas → tabla; extrae serial_from/serial_to por rango
+- `common/normalizer.py` — soporte dinámico de múltiples `engine_configuration` por rango serial; backwards-compatible con Yamaha y Volvo; deduplicación de engine_configuration por (brand, model, serial_from, serial_to)
+
+### Resultado Mercury Marine 350 MAG MPI Alpha/Bravo
+- 11.221 registros crudos extraídos (10 rangos seriales, 400+ subsistemas)
+- 9.389 registros enviados a Odoo (1 brand + 1 engine_model + 10 engine_configuration + 1.533 articles + 7.844 compatibilities)
+- 0 rechazados, 0 errores — validado en Docker y confirmado en Odoo
+
+### Workarounds activos
+- Ninguno
+
+### Diferido a Fase 4
+- Volvo multi-motor: ampliar volvo.py para scrapear dinámicamente motores diesel, genset y transmisiones (no solo TAMD72P-A)
+- Mercury multi-motor: ampliar mercruiser.py para scrapear todos los motores del catálogo

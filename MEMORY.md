@@ -8,12 +8,8 @@
 2026-04-27
 
 ## Fase actual
-**Fase 2 — CERRADA** — pipeline web Volvo Penta mergeado a main.
-**Próxima: Fase 3 — por definir**
-
-## Deuda técnica detectada (pendiente Fase 3)
-
-- **Docker volume path incorrecto para Yamaha:** `manufacturers/yamaha.py` usa `file_path: 'data/VF150LA...'` (relativo a `/app`). El Dockerfile declara `VOLUME ["/data"]`. Al correr `docker run`, montar como `-v .../data:/app/data` (no `/data`). Fase 1 nunca se validó en Docker — bug no detectado hasta ahora.
+**Fase 3 — CERRADA** — Mercury Marine mergeado a main.
+**Próxima: Fase 4 — por definir**
 
 ---
 
@@ -34,11 +30,26 @@
 
 ---
 
+## Resultado de Fase 3
+
+| Métrica | Valor |
+|---|---|
+| Registros enviados | 9.389 |
+| Engine configurations | 10 |
+| Articles únicos | 1.533 |
+| Compatibilities | 7.844 |
+| Errores | 0 |
+
+### Componentes entregados
+- `manufacturers/mercruiser.py` — Mercury Marine 350 MAG MPI Alpha/Bravo
+- `common/normalizer.py` — soporte dinámico de N engine_configurations por serial range
+
+---
+
 ## Próximo paso concreto
 
-1. Corregir Docker volume path de Yamaha (ver deuda técnica arriba) — fix de 1 línea.
-2. Planificar Fase 3 con el usuario — alcance por definir.
-3. Ejecutar PROTOCOLO_GATE (apertura Fase 3) antes de comenzar.
+Planificar Fase 4 con el usuario — alcance por definir.
+Ejecutar PROTOCOLO_GATE (apertura Fase 4) antes de comenzar.
 
 ---
 

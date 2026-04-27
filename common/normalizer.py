@@ -2,8 +2,9 @@ RECORD_ORDER = ['brand', 'engine_model', 'engine_configuration', 'article', 'com
 
 # Claves de deduplicación por record_type (según INTEGRACION_SCRAPER.md)
 DEDUP_KEYS = {
-    'article':       lambda p: (p['ref_code'], p['brand_name']),
-    'compatibility': lambda p: (p['article_ref'], p['brand_name'], p['engine_model_name'], p.get('serial_from'), p.get('serial_to')),
+    'engine_configuration': lambda p: (p['brand_name'], p['engine_model_name'], p.get('serial_from'), p.get('serial_to')),
+    'article':              lambda p: (p['ref_code'], p['brand_name']),
+    'compatibility':        lambda p: (p['article_ref'], p['brand_name'], p['engine_model_name'], p.get('serial_from'), p.get('serial_to')),
 }
 
 REQUIRED_FIELDS = {
@@ -49,14 +50,10 @@ def normalize(raw_records: list[dict], config: dict) -> tuple[list[dict], list[d
     })
 
     engine_cfg = config['engine_configuration']
-    normalized['engine_configuration'].append({
-        'source': source_id,
-        'record_type': 'engine_configuration',
-        'payload': {k: v for k, v in engine_cfg.items()},
-    })
 
     # 2. Artículos y compatibilidades desde los registros extraídos
     rejected = []
+    serial_ranges_seen = {}  # (serial_from, serial_to) → True
 
     for raw in raw_records:
         sf = raw['source_fields']
@@ -64,6 +61,10 @@ def normalize(raw_records: list[dict], config: dict) -> tuple[list[dict], list[d
 
         if record_type != 'article':
             continue
+
+        # Rastrear rangos seriales dinámicos (Mercruiser y similares)
+        if sf.get('serial_from'):
+            serial_ranges_seen[(sf['serial_from'], sf.get('serial_to'))] = True
 
         article_payload = {
             'ref_code':      sf['part_no'],
@@ -85,12 +86,16 @@ def normalize(raw_records: list[dict], config: dict) -> tuple[list[dict], list[d
             'payload': article_payload,
         })
 
+        # Compatibilidad: usa serial del artículo si está disponible, sino el del config
+        serial_from = sf.get('serial_from') if sf.get('serial_from') is not None else engine_cfg.get('serial_from')
+        serial_to   = sf.get('serial_to')   if sf.get('serial_from') is not None else engine_cfg.get('serial_to')
+
         compatibility_payload = {
             'article_ref':       sf['part_no'],
             'brand_name':        brand_name,
             'engine_model_name': engine_model_name,
-            'serial_from':       engine_cfg.get('serial_from'),
-            'serial_to':         engine_cfg.get('serial_to'),
+            'serial_from':       serial_from,
+            'serial_to':         serial_to,
             'notes':             sf.get('remarks') or None,
         }
 
@@ -103,6 +108,25 @@ def normalize(raw_records: list[dict], config: dict) -> tuple[list[dict], list[d
             'source': source_id,
             'record_type': 'compatibility',
             'payload': compatibility_payload,
+        })
+
+    # Engine configurations: dinámicas desde artículos (Mercruiser) o fijas desde config (Yamaha/Volvo)
+    if serial_ranges_seen:
+        for (serial_from, serial_to) in serial_ranges_seen:
+            normalized['engine_configuration'].append({
+                'source': source_id,
+                'record_type': 'engine_configuration',
+                'payload': {
+                    **{k: v for k, v in engine_cfg.items() if k not in ('serial_from', 'serial_to')},
+                    'serial_from': serial_from,
+                    'serial_to':   serial_to,
+                },
+            })
+    else:
+        normalized['engine_configuration'].append({
+            'source': source_id,
+            'record_type': 'engine_configuration',
+            'payload': {k: v for k, v in engine_cfg.items()},
         })
 
     valid = []
