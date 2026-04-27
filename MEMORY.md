@@ -9,7 +9,7 @@
 
 ## Fase actual
 **Fase 2 — Web Adapter + Volvo — EN CURSO**
-**WP activo: WP2 — Volvo config (navegación + parser)**
+**WP activo: WP3 — Integración end-to-end contra Odoo**
 
 ---
 
@@ -18,17 +18,18 @@
 | WP | Descripción | Estado |
 |---|---|---|
 | WP1 | WebAdapter scaffold (Playwright) | ✓ Completado |
-| WP2 | Volvo config (navegación + parser) | En curso |
-| WP3 | Integración end-to-end contra Odoo | Pendiente |
+| WP2 | Volvo config (navegación + parser) | ✓ Completado |
+| WP3 | Integración end-to-end contra Odoo | En curso |
 
 ---
 
 ## Próximo paso concreto
 
-Implementar WP2:
-- `manufacturers/volvo.py`: config con `ADAPTER = WebAdapter`, `extract_fn` con lógica de navegación marinepartseurope.com (categoría → producto → explodedview → tabla)
-- Adaptar lógica del POC (`/Users/matiastorrilla/projects/Prueba de catalogo/scraper_marine.py`) al patrón Strategy
-- Criterio de cierre: extracción real de partes Volvo funcionando, shape del output conocido
+Implementar WP3:
+- Levantar Odoo local (`http://localhost:8069`)
+- Ejecutar `python run.py --manufacturer volvo` (sin dry-run)
+- Verificar 3.653 registros procesados, 0 errores en Odoo
+- Ajustar normalizer solo si hay gaps reales con el schema de Odoo
 
 ---
 
