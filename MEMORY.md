@@ -25,11 +25,21 @@
 
 ## Próximo paso concreto
 
-Implementar WP3:
-- Levantar Odoo local (`http://localhost:8069`)
-- Ejecutar `python run.py --manufacturer volvo` (sin dry-run)
-- Verificar 3.653 registros procesados, 0 errores en Odoo
-- Ajustar normalizer solo si hay gaps reales con el schema de Odoo
+WP3 en curso — pipeline local ya validado (3.653 procesados, 0 errores). Pendiente: validar en Docker.
+
+Próximo paso al abrir sesión:
+1. Abrir Docker Desktop (computadora fue reiniciada)
+2. Levantar Odoo: `cd /ruta/sistema-gestion-nautica && docker compose up -d`
+3. Ejecutar en Docker:
+```bash
+docker run --rm \
+  -e ODOO_URL=http://host.docker.internal:8069 \
+  -e ODOO_DB=nautica \
+  -e ODOO_USER=catalog-sync@nautica.internal \
+  -e ODOO_PASS=catalog-sync-2026! \
+  catalog-scraper --manufacturer volvo
+```
+4. Si la imagen no existe (reinicio limpia cache a veces): `docker build -t catalog-scraper . && docker run ...`
 
 ---
 
