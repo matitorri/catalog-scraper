@@ -5,7 +5,7 @@
 ---
 
 ## Última actualización
-2026-04-27
+2026-04-27 (sesión 3)
 
 ## Fase actual
 **Fase 3 — CERRADA** — Mercury Marine mergeado a main.
