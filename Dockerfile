@@ -11,6 +11,6 @@ RUN playwright install chromium --with-deps
 COPY . .
 
 # Los PDFs se montan aquí en tiempo de ejecución
-VOLUME ["/data"]
+VOLUME ["/app/data"]
 
 ENTRYPOINT ["python", "run.py"]
