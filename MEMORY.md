@@ -8,28 +8,37 @@
 2026-04-27
 
 ## Fase actual
-**Fase 1 — Scaffold y primer adaptador — EN CURSO**
-**WP activo: WP4 — Runner + CLI**
+**Fase 1 — CERRADA** — pipeline PDF→Odoo funcional y mergeado a main.
+**Próxima: Fase 2 — Web Adapter + Mercury (tentativo)**
 
 ---
 
-## Secuencia de WPs — Fase 1
+## Resultado de Fase 1
 
-| WP | Descripción | Estado |
-|---|---|---|
-| WP1 | Scaffold y contratos | ✓ Completado |
-| WP2 | PDF Adapter + Yamaha | ✓ Completado |
-| WP3 | Common layer (normalizer + sender) | ✓ Completado |
-| WP4 | Runner + CLI | En curso |
+| Métrica | Valor |
+|---|---|
+| Registros enviados | 1.201 |
+| Articles únicos | 599 (667 extraídos, 68 deduplicados) |
+| Errores | 0 |
+| Commit de merge | 0617244 (main) |
+
+### Componentes entregados
+- `adapters/base.py` — interfaz abstracta `BaseAdapter`
+- `adapters/pdf_adapter.py` — extracción texto desde PDF (pdfplumber)
+- `manufacturers/yamaha.py` — config Yamaha VF150A 2018
+- `common/normalizer.py` — normaliza, deduplica, ordena por record_type
+- `common/sender.py` — auth XML-RPC + send_batch (allow_none=True)
+- `run.py` — CLI: `--manufacturer X`, `--dry-run`
+- `Dockerfile` — imagen python:3.13-slim
 
 ---
 
 ## Próximo paso concreto
 
-Implementar WP4:
-- `run.py`: `--manufacturer X` → importa `manufacturers/X.py` → extrae → normaliza → envía → imprime resumen
-- Flag `--dry-run`: extrae y normaliza, no envía
-- Criterio de cierre: `python run.py --manufacturer yamaha` ejecuta el pipeline completo de punta a punta
+Planificar Fase 2:
+- `adapters/web_adapter.py` — scraping genérico desde HTML (beautifulsoup4)
+- `manufacturers/mercury.py` — config Mercury (web)
+- Ejecutar PROTOCOLO_GATE (apertura Fase 2) antes de comenzar
 
 ---
 
