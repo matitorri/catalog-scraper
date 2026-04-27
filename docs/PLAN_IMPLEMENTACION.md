@@ -85,8 +85,8 @@ Las dependencias son hacia arriba — un `engine_model` falla si su `brand` no e
 |---|---|---|
 | WP1 | Scaffold y contratos | ✓ Completado |
 | WP2 | PDF Adapter + Yamaha | ✓ Completado |
-| WP3 | Common layer (normalizer + sender) | En curso |
-| WP4 | Runner + CLI | Pendiente |
+| WP3 | Common layer (normalizer + sender) | ✓ Completado |
+| WP4 | Runner + CLI | En curso |
 
 ### WP1 — Scaffold y contratos
 

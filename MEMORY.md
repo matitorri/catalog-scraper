@@ -9,7 +9,7 @@
 
 ## Fase actual
 **Fase 1 — Scaffold y primer adaptador — EN CURSO**
-**WP activo: WP2 — PDF Adapter + Yamaha**
+**WP activo: WP4 — Runner + CLI**
 
 ---
 
@@ -18,19 +18,18 @@
 | WP | Descripción | Estado |
 |---|---|---|
 | WP1 | Scaffold y contratos | ✓ Completado |
-| WP2 | PDF Adapter + Yamaha | En curso |
-| WP3 | Common layer (normalizer + sender) | Pendiente |
-| WP4 | Runner + CLI | Pendiente |
+| WP2 | PDF Adapter + Yamaha | ✓ Completado |
+| WP3 | Common layer (normalizer + sender) | ✓ Completado |
+| WP4 | Runner + CLI | En curso |
 
 ---
 
 ## Próximo paso concreto
 
-Implementar WP2:
-1. El usuario provee el PDF de Yamaha
-2. Explorar estructura del PDF con pdfplumber (tablas, páginas, campos disponibles)
-3. Implementar `adapters/pdf_adapter.py` genérico
-4. Implementar `manufacturers/yamaha.py` con config + field_mapping
+Implementar WP4:
+- `run.py`: `--manufacturer X` → importa `manufacturers/X.py` → extrae → normaliza → envía → imprime resumen
+- Flag `--dry-run`: extrae y normaliza, no envía
+- Criterio de cierre: `python run.py --manufacturer yamaha` ejecuta el pipeline completo de punta a punta
 
 ---
 
