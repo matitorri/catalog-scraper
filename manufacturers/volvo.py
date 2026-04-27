@@ -35,28 +35,31 @@ def _parse_table(page, section, source_id):
         if not ref or not re.match(r"^\d", ref):
             continue
 
-        # td[1]: description text + part number inside <a>
+        # td[1]: optional <span class="dot"> (hierarchy) + description + <a> part number + optional extra detail
         name_cell = cells[1]
+        level = 1 if name_cell.query_selector("span.dot") else 0
         part_link = name_cell.query_selector("a")
         part_no = part_link.inner_text().strip() if part_link else ""
         full_text = name_cell.inner_text().strip()
+
         if part_no and part_no in full_text:
             idx = full_text.index(part_no)
-            before = full_text[:idx].strip().lstrip("•").strip()
-            after = full_text[idx + len(part_no):].strip()
-            description = f"{before}  {after}".strip() if after else before
+            description = full_text[:idx].strip()
+            remarks_raw = full_text[idx + len(part_no):].strip()
+            remarks = remarks_raw if remarks_raw else None
         else:
-            description = full_text.lstrip("•").strip()
+            description = full_text.strip()
+            remarks = None
 
         qty = cells[2].inner_text().strip() if len(cells) > 2 else ""
 
+        # td[3]: status icon — text lives in <div class="tooltip-inner"> (display:none)
+        # inner_text() skips hidden elements; text_content() reads raw DOM text
         status = ""
         if len(cells) > 3:
-            img = cells[3].query_selector("img")
-            if img:
-                status = (img.get_attribute("alt") or img.get_attribute("title") or "").strip()
-            if not status:
-                status = cells[3].inner_text().strip()
+            tooltip = cells[3].query_selector(".tooltip-inner")
+            if tooltip:
+                status = tooltip.text_content().strip()
 
         records.append({
             "source_fields": {
@@ -66,6 +69,8 @@ def _parse_table(page, section, source_id):
                 "ref_no":      ref,
                 "qty":         qty,
                 "status":      status,
+                "level":       level,
+                "remarks":     remarks,
             },
             "meta": {
                 "source_id":   source_id,
