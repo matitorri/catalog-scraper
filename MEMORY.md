@@ -8,8 +8,8 @@
 2026-04-27
 
 ## Fase actual
-**Fase 3 — EN PROGRESO** — Mercury Marine (mercruiserparts.com), rama `fase-3`.
-**WP activo: WP2** — integración end-to-end en Docker
+**Fase 3 — CERRADA** — Mercury Marine mergeado a main.
+**Próxima: Fase 4 — por definir**
 
 ---
 
@@ -30,12 +30,26 @@
 
 ---
 
+## Resultado de Fase 3
+
+| Métrica | Valor |
+|---|---|
+| Registros enviados | 9.389 |
+| Engine configurations | 10 |
+| Articles únicos | 1.533 |
+| Compatibilities | 7.844 |
+| Errores | 0 |
+
+### Componentes entregados
+- `manufacturers/mercruiser.py` — Mercury Marine 350 MAG MPI Alpha/Bravo
+- `common/normalizer.py` — soporte dinámico de N engine_configurations por serial range
+
+---
+
 ## Próximo paso concreto
 
-Ejecutar pipeline Mercruiser completo en Docker:
-- `docker build -t catalog-scraper .` (rebuild — código nuevo)
-- `docker run --rm -v .../data:/app/data --env-file .env catalog-scraper --manufacturer mercruiser`
-- Criterio: 0 errores, 10 engine_configurations en Odoo
+Planificar Fase 4 con el usuario — alcance por definir.
+Ejecutar PROTOCOLO_GATE (apertura Fase 4) antes de comenzar.
 
 ---
 

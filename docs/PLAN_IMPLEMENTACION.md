@@ -215,7 +215,7 @@ python run.py --manufacturer yamaha --dry-run   # extrae y normaliza, no envía
 | WP | Descripción | Estado |
 |---|---|---|
 | WP1 | Mercruiser config (navegación 5 niveles + parser) | ✓ Completado |
-| WP2 | Integración end-to-end en Docker contra Odoo | En progreso |
+| WP2 | Integración end-to-end en Docker contra Odoo | ✓ Completado |
 
 ### Modelo de datos Mercury Marine
 
