@@ -8,48 +8,32 @@
 2026-04-27
 
 ## Fase actual
-**Fase 2 — Web Adapter + Volvo — EN CURSO**
-**WP activo: WP3 — Integración end-to-end contra Odoo**
+**Fase 2 — CERRADA** — pipeline web Volvo Penta mergeado a main.
+**Próxima: Fase 3 — por definir**
 
 ---
 
-## Secuencia de WPs — Fase 2
+## Resultado de Fase 2
 
-| WP | Descripción | Estado |
-|---|---|---|
-| WP1 | WebAdapter scaffold (Playwright) | ✓ Completado |
-| WP2 | Volvo config (navegación + parser) | ✓ Completado |
-| WP3 | Integración end-to-end contra Odoo | En curso |
+| Métrica | Valor |
+|---|---|
+| Registros enviados | 3.653 |
+| Articles únicos | 1.825 |
+| Rechazados (sin part_no) | 502 |
+| Errores | 0 |
+| Commit de merge | 895bed0 (main) |
+
+### Componentes entregados
+- `adapters/web_adapter.py` — `WebAdapter(BaseAdapter)` con Playwright Chromium headless
+- `manufacturers/volvo.py` — config Volvo Penta TAMD72P-A (marinepartseurope.com)
+- `Dockerfile` — `ENV PYTHONUNBUFFERED=1`
 
 ---
 
 ## Próximo paso concreto
 
-WP3 en curso — pipeline local ya validado (3.653 procesados, 0 errores). Pendiente: validar en Docker.
-
-Próximo paso al abrir sesión:
-1. Abrir Docker Desktop (computadora fue reiniciada)
-2. Levantar Odoo: `cd /ruta/sistema-gestion-nautica && docker compose up -d`
-3. Ejecutar en Docker:
-```bash
-docker run --rm \
-  -e ODOO_URL=http://host.docker.internal:8069 \
-  -e ODOO_DB=nautica \
-  -e ODOO_USER=catalog-sync@nautica.internal \
-  -e ODOO_PASS=catalog-sync-2026! \
-  catalog-scraper --manufacturer volvo
-```
-4. Si la imagen no existe (reinicio limpia cache a veces): `docker build -t catalog-scraper . && docker run ...`
-
----
-
-## Contexto técnico Fase 2
-
-- **Sitio:** `https://marinepartseurope.com` — Blazor Server (.NET/SignalR), sin Cloudflare, sin anti-bot
-- **Stack:** Playwright headless Chromium (sync_api)
-- **Flujo:** categoría → `/product/` → `/explodedview/?header=` → `table tbody tr`
-- **POC de referencia:** `/Users/matiastorrilla/projects/Prueba de catalogo/scraper_marine.py`
-- **WebAdapter es genérico** — la lógica de navegación y parseo vive en `manufacturers/volvo.py`, no en el adapter
+Planificar Fase 3 con el usuario — alcance por definir.
+Ejecutar PROTOCOLO_GATE (apertura Fase 3) antes de comenzar.
 
 ---
 
