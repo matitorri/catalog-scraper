@@ -11,6 +11,10 @@
 **Fase 2 — CERRADA** — pipeline web Volvo Penta mergeado a main.
 **Próxima: Fase 3 — por definir**
 
+## Deuda técnica detectada (pendiente Fase 3)
+
+- **Docker volume path incorrecto para Yamaha:** `manufacturers/yamaha.py` usa `file_path: 'data/VF150LA...'` (relativo a `/app`). El Dockerfile declara `VOLUME ["/data"]`. Al correr `docker run`, montar como `-v .../data:/app/data` (no `/data`). Fase 1 nunca se validó en Docker — bug no detectado hasta ahora.
+
 ---
 
 ## Resultado de Fase 2
@@ -32,8 +36,9 @@
 
 ## Próximo paso concreto
 
-Planificar Fase 3 con el usuario — alcance por definir.
-Ejecutar PROTOCOLO_GATE (apertura Fase 3) antes de comenzar.
+1. Corregir Docker volume path de Yamaha (ver deuda técnica arriba) — fix de 1 línea.
+2. Planificar Fase 3 con el usuario — alcance por definir.
+3. Ejecutar PROTOCOLO_GATE (apertura Fase 3) antes de comenzar.
 
 ---
 
