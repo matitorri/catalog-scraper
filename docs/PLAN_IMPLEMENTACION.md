@@ -162,7 +162,8 @@ python run.py --manufacturer yamaha --dry-run   # extrae y normaliza, no envía
 | Fabricante | Adapter | Fuente | Estado |
 |---|---|---|---|
 | Yamaha | PdfAdapter | PDF catálogo | Fase 1 |
-| Volvo | WebAdapter | Web scraping | Fase 2 |
+| Volvo Penta | WebAdapter | Web scraping | Fase 2 |
+| Mercury Marine | WebAdapter | Web scraping | Fase 3 |
 
 ---
 
@@ -204,6 +205,54 @@ python run.py --manufacturer yamaha --dry-run   # extrae y normaliza, no envía
 **Objetivo:** verificar que output WebAdapter+Volvo pasa por normalizer y sender sin gaps. Ajustar normalizer solo si hay diferencias reales.
 
 **Criterio de cierre:** `python run.py --manufacturer volvo` ejecuta pipeline completo, 0 errores.
+
+---
+
+## Fase 3
+
+**Objetivo:** pipeline funcional end-to-end para Mercury Marine (mercruiserparts.com) usando el WebAdapter existente. Motor de prueba: 5.7L 350 MAG MPI Alpha/Bravo (sterndrive gas).
+
+| WP | Descripción | Estado |
+|---|---|---|
+| WP1 | Mercruiser config (navegación 5 niveles + parser) | En progreso |
+| WP2 | Integración end-to-end en Docker contra Odoo | Pendiente |
+
+### Modelo de datos Mercury Marine
+
+- **brand:** `Mercury Marine` — marca paraguas del catálogo (engloba Mercury, Mercruiser, Mercury Racing)
+- **engine_model:** nombre comercial exacto del catálogo — ej: `350 MAG MPI Alpha/Bravo`
+- **engine_configuration:** una por rango serial — `serial_from` / `serial_to` extraídos del slug de la URL
+
+### Estructura de navegación — mercruiserparts.com
+
+```
+/sterndrive-engines-gas                                  (categoría)
+  → /engines-gas-5-7l-350-cu-in-v8-gm                   (familia)
+    → /5-7l-350-cu-in-v8-gm-350-mag-mpi-alpha-bravo      (variante = engine_model)
+      → /350-mag-mpi-alpha-bravo-0m600000-thru-0w059999   (rango serial = engine_configuration)
+        → /bam/subassemblydetail/{id}/{id}                (subsistema)
+          → table tbody tr                                (partes)
+```
+
+Columnas de la tabla: `Ref #`, `Current Part Nbr`, `Description`, `Superceded From`, `Status`, `Notes`, `List Price`, `Online Price`, `Quan Used`.
+
+Los `----` al inicio de la descripción indican jerarquía (igual que `span.dot` en Volvo).
+
+### WP1 — Mercruiser config
+
+**Objetivo:** `manufacturers/mercruiser.py` con lógica de navegación de los 5 niveles y parser de tabla. Motor de prueba: 5.7L 350 MAG MPI Alpha/Bravo.
+
+**Flujo:** variante → serial ranges → subsistemas → `table tbody tr`
+
+**Criterio de cierre:** extracción real de partes Mercury funcionando con todos los engine_configurations del motor de prueba; shape del output conocido y validado.
+
+---
+
+### WP2 — Integración end-to-end
+
+**Objetivo:** verificar que output WebAdapter+Mercruiser pasa por normalizer y sender sin gaps. Validar en Docker.
+
+**Criterio de cierre:** `docker run ... catalog-scraper --manufacturer mercruiser` → 0 errores.
 
 ---
 
