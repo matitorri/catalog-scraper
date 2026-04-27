@@ -162,7 +162,7 @@ python run.py --manufacturer yamaha --dry-run   # extrae y normaliza, no envía
 | Fabricante | Adapter | Fuente | Estado |
 |---|---|---|---|
 | Yamaha | PdfAdapter | PDF catálogo | Fase 1 |
-| Mercury | WebAdapter | Web scraping | Fase 2 (tentativo) |
+| Volvo | WebAdapter | Web scraping | Fase 2 (tentativo) |
 
 ---
 

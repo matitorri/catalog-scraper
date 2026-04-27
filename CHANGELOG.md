@@ -23,4 +23,4 @@
 
 ### Diferido a Fase 2
 - `adapters/web_adapter.py` — scraping genérico desde HTML
-- `manufacturers/mercury.py` — config Mercury (web)
+- `manufacturers/volvo.py` — config Volvo (web)

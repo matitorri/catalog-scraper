@@ -37,7 +37,7 @@
 
 Planificar Fase 2:
 - `adapters/web_adapter.py` — scraping genérico desde HTML (beautifulsoup4)
-- `manufacturers/mercury.py` — config Mercury (web)
+- `manufacturers/volvo.py` — config Volvo (web)
 - Ejecutar PROTOCOLO_GATE (apertura Fase 2) antes de comenzar
 
 ---
