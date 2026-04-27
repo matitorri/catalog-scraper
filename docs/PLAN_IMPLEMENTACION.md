@@ -81,6 +81,13 @@ Las dependencias son hacia arriba — un `engine_model` falla si su `brand` no e
 
 **Objetivo:** pipeline funcional end-to-end para un fabricante (Yamaha, PDF) con los cuatro componentes base implementados.
 
+| WP | Descripción | Estado |
+|---|---|---|
+| WP1 | Scaffold y contratos | ✓ Completado |
+| WP2 | PDF Adapter + Yamaha | ✓ Completado |
+| WP3 | Common layer (normalizer + sender) | ✓ Completado |
+| WP4 | Runner + CLI | ✓ Completado |
+
 ### WP1 — Scaffold y contratos
 
 **Objetivo:** estructura de proyecto lista para desarrollar. Sin lógica de negocio.

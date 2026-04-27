@@ -9,7 +9,7 @@
 
 ## Fase actual
 **Fase 1 — Scaffold y primer adaptador — EN CURSO**
-**Próximo paso: confirmar diseño de WPs y arrancar WP1**
+**WP activo: WP4 — Runner + CLI**
 
 ---
 
@@ -17,18 +17,19 @@
 
 | WP | Descripción | Estado |
 |---|---|---|
-| WP1 | Scaffold y contratos | Pendiente |
-| WP2 | Common layer (sender + normalizer) | Pendiente |
-| WP3 | PDF Adapter + Yamaha | Pendiente |
-| WP4 | Runner + CLI | Pendiente |
+| WP1 | Scaffold y contratos | ✓ Completado |
+| WP2 | PDF Adapter + Yamaha | ✓ Completado |
+| WP3 | Common layer (normalizer + sender) | ✓ Completado |
+| WP4 | Runner + CLI | En curso |
 
 ---
 
 ## Próximo paso concreto
 
-Confirmar diseño de fase con el usuario y arrancar WP1:
-- Estructura de carpetas + base.py + requirements.txt
-- PDF de Yamaha real disponible para WP3
+Implementar WP4:
+- `run.py`: `--manufacturer X` → importa `manufacturers/X.py` → extrae → normaliza → envía → imprime resumen
+- Flag `--dry-run`: extrae y normaliza, no envía
+- Criterio de cierre: `python run.py --manufacturer yamaha` ejecuta el pipeline completo de punta a punta
 
 ---
 
