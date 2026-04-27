@@ -26,7 +26,7 @@ def send_batch(records: list[dict], batch_size: int = 1000) -> dict:
     """
     cfg = _get_config()
     uid = authenticate(cfg)
-    models = xmlrpc.client.ServerProxy(f"{cfg['url']}/xmlrpc/2/object")
+    models = xmlrpc.client.ServerProxy(f"{cfg['url']}/xmlrpc/2/object", allow_none=True)
 
     processed = 0
     errors = []
