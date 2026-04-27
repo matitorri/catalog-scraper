@@ -24,3 +24,25 @@
 ### Diferido a Fase 2
 - `adapters/web_adapter.py` — scraping genérico desde HTML
 - `manufacturers/volvo.py` — config Volvo (web)
+
+---
+
+## Fase 2 — Web Adapter + Volvo (2026-04-27)
+
+### Nuevo
+- `adapters/web_adapter.py` — `WebAdapter(BaseAdapter)` genérico con Playwright Chromium headless; delega navegación y parseo a `extract_fn` configurable por fabricante
+- `manufacturers/volvo.py` — config Volvo Penta TAMD72P-A; navegación marinepartseurope.com (Blazor Server): product → explodedviews → tabla; captura level, status (tooltip oculto), remarks (detalle técnico)
+- `Dockerfile` — `ENV PYTHONUNBUFFERED=1` para output en tiempo real en Docker
+- `requirements.txt` — `playwright>=1.44`
+
+### Resultado Volvo Penta TAMD72P-A
+- 3.988 registros crudos extraídos (170 secciones / explodedviews)
+- 3.653 registros enviados a Odoo (1 brand + 1 engine_model + 1 engine_configuration + 1.825 articles + 1.825 compatibilities)
+- 502 rechazados (subpartes sin número de parte — comportamiento esperado)
+- 0 errores — validado en Docker (`host.docker.internal`)
+
+### Workarounds activos
+- Ninguno
+
+### Diferido a Fase 3
+- Por definir
