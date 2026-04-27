@@ -9,7 +9,7 @@
 
 ## Fase actual
 **Fase 1 — Scaffold y primer adaptador — EN CURSO**
-**Próximo paso: confirmar diseño de WPs y arrancar WP1**
+**WP activo: WP2 — PDF Adapter + Yamaha**
 
 ---
 
@@ -17,18 +17,20 @@
 
 | WP | Descripción | Estado |
 |---|---|---|
-| WP1 | Scaffold y contratos | Pendiente |
-| WP2 | Common layer (sender + normalizer) | Pendiente |
-| WP3 | PDF Adapter + Yamaha | Pendiente |
+| WP1 | Scaffold y contratos | ✓ Completado |
+| WP2 | PDF Adapter + Yamaha | En curso |
+| WP3 | Common layer (normalizer + sender) | Pendiente |
 | WP4 | Runner + CLI | Pendiente |
 
 ---
 
 ## Próximo paso concreto
 
-Confirmar diseño de fase con el usuario y arrancar WP1:
-- Estructura de carpetas + base.py + requirements.txt
-- PDF de Yamaha real disponible para WP3
+Implementar WP2:
+1. El usuario provee el PDF de Yamaha
+2. Explorar estructura del PDF con pdfplumber (tablas, páginas, campos disponibles)
+3. Implementar `adapters/pdf_adapter.py` genérico
+4. Implementar `manufacturers/yamaha.py` con config + field_mapping
 
 ---
 
