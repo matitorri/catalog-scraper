@@ -172,7 +172,7 @@ python run.py --manufacturer yamaha --dry-run   # extrae y normaliza, no envía
 
 | WP | Descripción | Estado |
 |---|---|---|
-| WP1 | WebAdapter scaffold (Playwright) | En curso |
+| WP1 | WebAdapter scaffold (Playwright) | ✓ Completado |
 | WP2 | Volvo config (navegación + parser) | Pendiente |
 | WP3 | Integración end-to-end contra Odoo | Pendiente |
 

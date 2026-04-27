@@ -9,7 +9,7 @@
 
 ## Fase actual
 **Fase 2 — Web Adapter + Volvo — EN CURSO**
-**WP activo: WP1 — WebAdapter scaffold (Playwright)**
+**WP activo: WP2 — Volvo config (navegación + parser)**
 
 ---
 
@@ -17,19 +17,18 @@
 
 | WP | Descripción | Estado |
 |---|---|---|
-| WP1 | WebAdapter scaffold (Playwright) | En curso |
-| WP2 | Volvo config (navegación + parser) | Pendiente |
+| WP1 | WebAdapter scaffold (Playwright) | ✓ Completado |
+| WP2 | Volvo config (navegación + parser) | En curso |
 | WP3 | Integración end-to-end contra Odoo | Pendiente |
 
 ---
 
 ## Próximo paso concreto
 
-Implementar WP1:
-- `adapters/web_adapter.py`: `WebAdapter(BaseAdapter)` — recibe config con `extract_fn` callable, lanza Playwright Chromium headless, ejecuta callable con la page, retorna lista de dicts
-- `requirements.txt`: agregar `playwright`
-- `Dockerfile`: agregar `RUN playwright install chromium --with-deps`
-- Criterio de cierre: adapter lanza y cierra browser sin errores con callable de prueba
+Implementar WP2:
+- `manufacturers/volvo.py`: config con `ADAPTER = WebAdapter`, `extract_fn` con lógica de navegación marinepartseurope.com (categoría → producto → explodedview → tabla)
+- Adaptar lógica del POC (`/Users/matiastorrilla/projects/Prueba de catalogo/scraper_marine.py`) al patrón Strategy
+- Criterio de cierre: extracción real de partes Volvo funcionando, shape del output conocido
 
 ---
 
