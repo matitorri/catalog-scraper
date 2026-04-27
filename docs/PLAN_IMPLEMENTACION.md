@@ -162,7 +162,48 @@ python run.py --manufacturer yamaha --dry-run   # extrae y normaliza, no envía
 | Fabricante | Adapter | Fuente | Estado |
 |---|---|---|---|
 | Yamaha | PdfAdapter | PDF catálogo | Fase 1 |
-| Volvo | WebAdapter | Web scraping | Fase 2 (tentativo) |
+| Volvo | WebAdapter | Web scraping | Fase 2 |
+
+---
+
+## Fase 2
+
+**Objetivo:** pipeline funcional end-to-end para un fabricante web (Volvo, marinepartseurope.com) con WebAdapter basado en Playwright.
+
+| WP | Descripción | Estado |
+|---|---|---|
+| WP1 | WebAdapter scaffold (Playwright) | En curso |
+| WP2 | Volvo config (navegación + parser) | Pendiente |
+| WP3 | Integración end-to-end contra Odoo | Pendiente |
+
+### WP1 — WebAdapter scaffold
+
+**Objetivo:** `WebAdapter(BaseAdapter)` genérico con Playwright. Lanza browser, crea contexto/página, ejecuta callable de extracción recibido en config, cierra browser. Actualizar dependencias y Dockerfile.
+
+**Componentes:**
+- `adapters/web_adapter.py` — clase `WebAdapter(BaseAdapter)`
+- `requirements.txt` — agregar `playwright`
+- `Dockerfile` — instalar Playwright + Chromium
+
+**Criterio de cierre:** adapter instanciable, lanza y cierra browser sin errores con un callable de prueba.
+
+---
+
+### WP2 — Volvo config
+
+**Objetivo:** `manufacturers/volvo.py` con lógica de navegación de marinepartseurope.com y parser de tabla. Adaptar POC al patrón Strategy.
+
+**Flujo de navegación:** categoría → `/product/` → `/explodedview/?header=` → `table tbody tr`
+
+**Criterio de cierre:** extracción real de partes Volvo funcionando; shape del output conocido y validado.
+
+---
+
+### WP3 — Integración end-to-end
+
+**Objetivo:** verificar que output WebAdapter+Volvo pasa por normalizer y sender sin gaps. Ajustar normalizer solo si hay diferencias reales.
+
+**Criterio de cierre:** `python run.py --manufacturer volvo` ejecuta pipeline completo, 0 errores.
 
 ---
 
