@@ -1,5 +1,11 @@
 RECORD_ORDER = ['brand', 'engine_model', 'engine_configuration', 'article', 'compatibility']
 
+# Claves de deduplicación por record_type (según INTEGRACION_SCRAPER.md)
+DEDUP_KEYS = {
+    'article':       lambda p: (p['ref_code'], p['brand_name']),
+    'compatibility': lambda p: (p['article_ref'], p['brand_name'], p['engine_model_name'], p.get('serial_from'), p.get('serial_to')),
+}
+
 REQUIRED_FIELDS = {
     'brand':                ['name'],
     'engine_model':         ['name', 'brand_name'],
@@ -101,9 +107,22 @@ def normalize(raw_records: list[dict], config: dict) -> tuple[list[dict], list[d
 
     valid = []
     for rt in RECORD_ORDER:
+        if rt in DEDUP_KEYS:
+            normalized[rt] = _dedup(normalized[rt], DEDUP_KEYS[rt])
         valid.extend(normalized[rt])
 
     return valid, rejected
+
+
+def _dedup(records: list[dict], key_fn) -> list[dict]:
+    seen = set()
+    result = []
+    for r in records:
+        k = key_fn(r['payload'])
+        if k not in seen:
+            seen.add(k)
+            result.append(r)
+    return result
 
 
 def _validate(payload: dict, record_type: str) -> str | None:
