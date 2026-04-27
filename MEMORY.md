@@ -8,37 +8,48 @@
 2026-04-27
 
 ## Fase actual
-**Fase 1 — CERRADA** — pipeline PDF→Odoo funcional y mergeado a main.
-**Próxima: Fase 2 — Web Adapter + Mercury (tentativo)**
+**Fase 2 — Web Adapter + Volvo — EN CURSO**
+**WP activo: WP3 — Integración end-to-end contra Odoo**
 
 ---
 
-## Resultado de Fase 1
+## Secuencia de WPs — Fase 2
 
-| Métrica | Valor |
-|---|---|
-| Registros enviados | 1.201 |
-| Articles únicos | 599 (667 extraídos, 68 deduplicados) |
-| Errores | 0 |
-| Commit de merge | 0617244 (main) |
-
-### Componentes entregados
-- `adapters/base.py` — interfaz abstracta `BaseAdapter`
-- `adapters/pdf_adapter.py` — extracción texto desde PDF (pdfplumber)
-- `manufacturers/yamaha.py` — config Yamaha VF150A 2018
-- `common/normalizer.py` — normaliza, deduplica, ordena por record_type
-- `common/sender.py` — auth XML-RPC + send_batch (allow_none=True)
-- `run.py` — CLI: `--manufacturer X`, `--dry-run`
-- `Dockerfile` — imagen python:3.13-slim
+| WP | Descripción | Estado |
+|---|---|---|
+| WP1 | WebAdapter scaffold (Playwright) | ✓ Completado |
+| WP2 | Volvo config (navegación + parser) | ✓ Completado |
+| WP3 | Integración end-to-end contra Odoo | En curso |
 
 ---
 
 ## Próximo paso concreto
 
-Planificar Fase 2:
-- `adapters/web_adapter.py` — scraping genérico desde HTML (beautifulsoup4)
-- `manufacturers/volvo.py` — config Volvo (web)
-- Ejecutar PROTOCOLO_GATE (apertura Fase 2) antes de comenzar
+WP3 en curso — pipeline local ya validado (3.653 procesados, 0 errores). Pendiente: validar en Docker.
+
+Próximo paso al abrir sesión:
+1. Abrir Docker Desktop (computadora fue reiniciada)
+2. Levantar Odoo: `cd /ruta/sistema-gestion-nautica && docker compose up -d`
+3. Ejecutar en Docker:
+```bash
+docker run --rm \
+  -e ODOO_URL=http://host.docker.internal:8069 \
+  -e ODOO_DB=nautica \
+  -e ODOO_USER=catalog-sync@nautica.internal \
+  -e ODOO_PASS=catalog-sync-2026! \
+  catalog-scraper --manufacturer volvo
+```
+4. Si la imagen no existe (reinicio limpia cache a veces): `docker build -t catalog-scraper . && docker run ...`
+
+---
+
+## Contexto técnico Fase 2
+
+- **Sitio:** `https://marinepartseurope.com` — Blazor Server (.NET/SignalR), sin Cloudflare, sin anti-bot
+- **Stack:** Playwright headless Chromium (sync_api)
+- **Flujo:** categoría → `/product/` → `/explodedview/?header=` → `table tbody tr`
+- **POC de referencia:** `/Users/matiastorrilla/projects/Prueba de catalogo/scraper_marine.py`
+- **WebAdapter es genérico** — la lógica de navegación y parseo vive en `manufacturers/volvo.py`, no en el adapter
 
 ---
 
@@ -47,7 +58,6 @@ Planificar Fase 2:
 - **Endpoint Odoo:** `nautical.catalog.import` / `process_batch`
 - **Auth:** `catalog-sync@nautica.internal` / `catalog-sync-2026!`
 - **URL:** `http://localhost:8069` / DB: `nautica`
-- **Contrato:** `sistema-gestion-nautica/docs/INTEGRACION_SCRAPER.md`
 - **Batch size:** 1.000 registros por llamado
 - **Orden de envío requerido:** brand → engine_model → engine_configuration → article → compatibility
 
