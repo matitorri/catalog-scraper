@@ -9,7 +9,7 @@
 
 ## Fase actual
 **Fase 3 — EN PROGRESO** — Mercury Marine (mercruiserparts.com), rama `fase-3`.
-**WP activo: WP1** — `manufacturers/mercruiser.py`
+**WP activo: WP2** — integración end-to-end en Docker
 
 ---
 
@@ -32,11 +32,10 @@
 
 ## Próximo paso concreto
 
-Implementar `manufacturers/mercruiser.py`:
-- Navegar desde variante → serial ranges → subsistemas → tabla
-- URL de prueba: `/5-7l-350-cu-in-v8-gm-350-mag-mpi-alpha-bravo`
-- Brand: `Mercury Marine` | Engine model: `350 MAG MPI Alpha/Bravo`
-- Engine configuration: una por rango serial, `serial_from`/`serial_to` del slug
+Ejecutar pipeline Mercruiser completo en Docker:
+- `docker build -t catalog-scraper .` (rebuild — código nuevo)
+- `docker run --rm -v .../data:/app/data --env-file .env catalog-scraper --manufacturer mercruiser`
+- Criterio: 0 errores, 10 engine_configurations en Odoo
 
 ---
 
