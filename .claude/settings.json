@@ -7,8 +7,7 @@
       "Bash(pip *)",
       "Edit(*)",
       "Write(*)",
-      "Read(/Users/matiastorrilla/projects/Meta-Agentic-Agency/operaciones/protocolos/*)",
-      "Read(/Users/matiastorrilla/projects/Meta-Agentic-Agency/docs/frameworks/*)",
+      "Read(/Users/matiastorrilla/projects/Meta-Agentic-Agency/**)",
       "Write(/Users/matiastorrilla/projects/Meta-Agentic-Agency/docs/experiencias/catalog-scraper/*)"
     ]
   }
