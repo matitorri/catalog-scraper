@@ -8,8 +8,8 @@
 2026-04-27 (sesión 3)
 
 ## Fase actual
-**Fase 3 — CERRADA** — Mercury Marine mergeado a main.
-**Próxima: Fase 4 — por definir**
+**Fase 4 — EN PROGRESO** — catálogos completos multi-motor, rama `fase-4`.
+**WP activo: WP1** — Yamaha multi-PDF
 
 ---
 
@@ -48,8 +48,11 @@
 
 ## Próximo paso concreto
 
-Planificar Fase 4 con el usuario — alcance por definir.
-Ejecutar PROTOCOLO_GATE (apertura Fase 4) antes de comenzar.
+Implementar `manufacturers/yamaha.py` multi-PDF:
+- Escanear directorio `/app/data/yamaha/` buscando PDFs
+- Extraer engine_model, year, serial_code de página 1 con regex: `([A-Z0-9]+)-(\d{4})\s*\(([A-Z0-9]+)\)`
+- Extender normalizer para engine_model dinámico (mismo patrón que serial_from en Fase 3)
+- Validar en Docker con múltiples PDFs
 
 ---
 
