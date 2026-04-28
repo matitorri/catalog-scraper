@@ -278,7 +278,7 @@ El normalizer garantiza el orden `brand → engine_model → engine_configuratio
 | WP | Descripción | Estado |
 |---|---|---|
 | WP1 | Yamaha multi-PDF — auto-detección de engine_model desde página 1 | ✓ Completado |
-| WP2 | Volvo multi-motor — navegación dinámica de categorías | Pendiente |
+| WP2 | Volvo multi-motor — navegación dinámica de categorías | ✓ Completado |
 | WP3 | Mercury multi-motor — navegación dinámica de todas las categorías | Pendiente |
 
 ### WP1 — Yamaha multi-PDF

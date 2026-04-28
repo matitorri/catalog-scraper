@@ -9,7 +9,7 @@
 
 ## Fase actual
 **Fase 4 — EN PROGRESO** — catálogos completos multi-motor, rama `fase-4`.
-**WP activo: WP2** — Volvo multi-motor
+**WP activo: WP3** — Mercury multi-motor
 
 ---
 
@@ -20,27 +20,43 @@
 | Registros enviados | 1.201 |
 | Engine models detectados | 1 (VF150A 2018) |
 | Articles únicos | 599 |
-| Compatibilities | 599 |
 | Errores | 0 |
 
 ### Componentes entregados
-- `adapters/pdf_adapter.py` — soporte `data_dir` (multi-file) + `_detect_page1_model` con normalización de whitespace
-- `manufacturers/yamaha.py` — `data_dir=data/yamaha`, `page1_model_re` para auto-detección
-- `common/normalizer.py` — engine_models dinámicos (misma lógica que serial_ranges en Fase 3, un nivel más arriba)
+- `adapters/pdf_adapter.py` — soporte `data_dir` + `_detect_page1_model` con normalización de whitespace
+- `manufacturers/yamaha.py` — `data_dir=data/yamaha`, `page1_model_re`
+- `common/normalizer.py` — engine_models dinámicos (misma lógica que serial_ranges en Fase 3)
 
-### Nota: PDF movido
-El PDF original `data/VF150LA (6EH6) 2018.pdf` fue movido a `data/yamaha/VF150LA (6EH6) 2018.pdf`.
-El usuario puede agregar más PDFs Yamaha al directorio `data/yamaha/` sin cambiar código.
+---
+
+## Resultado de WP2 Fase 4 (cerrado)
+
+| Métrica | Valor |
+|---|---|
+| Registros enviados (validación) | 24.867 |
+| Categorías cubiertas | 5 (diesel, genset, gasolina, transmisiones, accesorios) |
+| Engine models (test 3×5) | 15 |
+| Errores | 0 |
+
+### Componentes entregados
+- `manufacturers/volvo.py` — navegación dinámica de 5 categorías; warm-up Blazor; `engine_model_name` en source_fields
+- `run.py` — log de rechazados limitado a 10 + contador
+- `max_products_per_category` — parámetro opcional para tests (no presente en producción)
+
+### Notas de producción
+- Para scraping completo (870+ motores): eliminar `max_products_per_category` del CONFIG
+- Tiempo estimado producción: ~3h por 18 motores → ~150h para los 870. Ejecutar por categorías separadas
 
 ---
 
 ## Próximo paso concreto
 
-**WP2 — Volvo multi-motor:** ampliar `manufacturers/volvo.py` para navegar dinámicamente todas las categorías de marinepartseurope.com.
-- Actualmente: un `product_path` hardcodeado (`/product/volvo-penta/tamd72p-a/`)
-- Objetivo: scrapear dinámicamente diesels, gasolina, genset, transmisiones
-- `engine_model` se deriva del nombre del producto en la página (no hardcodeado)
-- Validar en Docker al cierre
+**WP3 — Mercury multi-motor:** ampliar `manufacturers/mercruiser.py` para navegar dinámicamente todas las categorías de mercruiserparts.com.
+- Actualmente: `variant_path` hardcodeado a `350 MAG MPI Alpha/Bravo`
+- Objetivo: scrapear dinámicamente desde las categorías (gas sterndrive, diesel sterndrive, inboard, towsports, etc.)
+- `engine_model` = nombre de la variante en la página
+- La estructura de mercruiserparts.com tiene 5 niveles de navegación (ver Fase 3 en PLAN_IMPLEMENTACION.md)
+- Validar en Docker con subset antes de producción
 
 ---
 
@@ -52,7 +68,6 @@ El usuario puede agregar más PDFs Yamaha al directorio `data/yamaha/` sin cambi
 | Articles únicos | 1.825 |
 | Rechazados (sin part_no) | 502 |
 | Errores | 0 |
-| Commit de merge | 895bed0 (main) |
 
 ### Componentes entregados
 - `adapters/web_adapter.py` — `WebAdapter(BaseAdapter)` con Playwright Chromium headless
