@@ -6,6 +6,8 @@ from adapters.web_adapter import WebAdapter
 
 BASE_URL = "https://marinepartseurope.com"
 _BLAZOR_TIMEOUT = 45000
+# URL de warm-up para inicializar la app Blazor en sesión fresca
+_WARMUP_URL = "/en/dealer/other/category/marine%20diesel%20engines/product/tamd72p-a"
 
 
 def _wait(page, selector, timeout=_BLAZOR_TIMEOUT):
@@ -22,7 +24,7 @@ def _section_from_url(ev_link):
     return unquote(header) if header else ev_link.rstrip("/").split("/")[-1]
 
 
-def _parse_table(page, section, source_id):
+def _parse_table(page, section, source_id, engine_model_name):
     records = []
     rows = page.query_selector_all("table tbody tr")
 
@@ -63,14 +65,15 @@ def _parse_table(page, section, source_id):
 
         records.append({
             "source_fields": {
-                "part_no":     part_no,
-                "description": description,
-                "category":    section,
-                "ref_no":      ref,
-                "qty":         qty,
-                "status":      status,
-                "level":       level,
-                "remarks":     remarks,
+                "part_no":           part_no,
+                "description":       description,
+                "category":          section,
+                "ref_no":            ref,
+                "qty":               qty,
+                "status":            status,
+                "level":             level,
+                "remarks":           remarks,
+                "engine_model_name": engine_model_name,
             },
             "meta": {
                 "source_id":   source_id,
@@ -81,13 +84,37 @@ def _parse_table(page, section, source_id):
     return records
 
 
-def extract_volvo(page, config):
-    source_id = config["source_id"]
-    all_records = []
+def _collect_products(page, engine_url):
+    """Navega al listing de la categoría y retorna lista de (engine_model_name, product_path)."""
+    page.goto(BASE_URL + engine_url, wait_until="domcontentloaded", timeout=60000)
+    _wait(page, "a[href*='/product/']", timeout=_BLAZOR_TIMEOUT)
 
-    page.goto(BASE_URL + config["product_path"], wait_until="domcontentloaded", timeout=60000)
-    _wait(page, "a[href*='/explodedview/']")
+    products = page.evaluate("""
+        () => Array.from(document.querySelectorAll('a[href]'))
+            .map(a => ({href: a.href, text: a.innerText.trim()}))
+            .filter(l => l.href.includes('/product/')
+                      && !l.href.includes('/explodedview/')
+                      && l.text.length > 0)
+    """)
 
+    seen = set()
+    result = []
+    for p in products:
+        path = p['href'].replace(BASE_URL, "")
+        if path not in seen:
+            seen.add(path)
+            result.append((p['text'], path))
+    return result
+
+
+def _extract_product(page, product_path, engine_model_name, source_id):
+    """Navega al producto y extrae todas sus partes desde los explodedviews."""
+    page.goto(BASE_URL + product_path, wait_until="domcontentloaded", timeout=60000)
+    if not _wait(page, "a[href*='/explodedview/']"):
+        print(f"      ADVERTENCIA: sin explodedviews")
+        return []
+
+    # Extraer hrefs ANTES de navegar (evita stale handles)
     anchors = page.query_selector_all("a[href]")
     ev_links = []
     for a in anchors:
@@ -97,21 +124,44 @@ def extract_volvo(page, config):
             ev_links.append(path)
     ev_links = list(dict.fromkeys(ev_links))
 
-    print(f"    Explodedviews encontrados: {len(ev_links)}")
-
+    records = []
     for ev_link in ev_links:
         section = _section_from_url(ev_link)
-        print(f"    Sección: {section}")
-
         page.goto(BASE_URL + ev_link, wait_until="domcontentloaded", timeout=60000)
         if not _wait(page, "table tbody tr"):
-            print(f"      ADVERTENCIA: tabla no apareció tras {_BLAZOR_TIMEOUT / 1000}s")
             continue
-
-        records = _parse_table(page, section, source_id)
-        print(f"      Partes extraídas: {len(records)}")
-        all_records.extend(records)
+        recs = _parse_table(page, section, source_id, engine_model_name)
+        records.extend(recs)
         time.sleep(1)
+
+    return records
+
+
+def extract_volvo(page, config):
+    source_id = config["source_id"]
+    all_records = []
+
+    # Warm-up: la app Blazor requiere al menos una navegación a un producto
+    # para inicializar el estado de sesión antes de poder usar los listings
+    print("  Inicializando sesión Blazor...")
+    page.goto(BASE_URL + _WARMUP_URL, wait_until="domcontentloaded", timeout=60000)
+    _wait(page, "a[href*='/explodedview/']")
+    print("  OK")
+
+    max_per_cat = config.get("max_products_per_category")
+
+    for engine_url, cat_name in config.get("categories", []):
+        print(f"\n  Categoría: {cat_name}")
+        products = _collect_products(page, engine_url)
+        if max_per_cat:
+            products = products[:max_per_cat]
+        print(f"  {len(products)} motores")
+
+        for engine_model_name, product_path in products:
+            print(f"    [{engine_model_name}] ", end="", flush=True)
+            records = _extract_product(page, product_path, engine_model_name, source_id)
+            print(f"{len(records)} partes")
+            all_records.extend(records)
 
     return all_records
 
@@ -119,24 +169,18 @@ def extract_volvo(page, config):
 ADAPTER = WebAdapter
 
 CONFIG = {
-    "source_id":    "volvo_web",
-    "product_path": "/en/dealer/other/category/marine%20diesel%20engines/product/tamd72p-a",
-    "extract_fn":   extract_volvo,
-
+    "source_id":  "volvo_web",
+    "extract_fn": extract_volvo,
+    "categories": [
+        ("/en/dealer/other/engine/marine%20diesel%20engines",             "marine diesel engines"),
+        ("/en/dealer/other/engine/marine%20diesel%20engines%20genset",    "marine diesel engines genset"),
+        ("/en/dealer/other/engine/marine%20gasoline%20engines",           "marine gasoline engines"),
+        ("/en/dealer/other/engine/marine%20drives%20%26%20transmissions", "marine drives & transmissions"),
+        ("/en/dealer/other/engine/accessories",                           "accessories"),
+    ],
     "brand": {
         "name":       "Volvo Penta",
         "brand_type": "oem",
     },
-    "engine_model": {
-        "name":       "TAMD72P-A",
-        "brand_name": "Volvo Penta",
-    },
-    "engine_configuration": {
-        "brand_name":        "Volvo Penta",
-        "engine_model_name": "TAMD72P-A",
-        "year_from":         None,
-        "year_to":           None,
-        "serial_from":       None,
-        "notes":             "Marine diesel engine — marinepartseurope.com",
-    },
+    # engine_model y engine_configuration se detectan dinámicamente por motor desde el catálogo
 }
