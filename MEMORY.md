@@ -5,11 +5,42 @@
 ---
 
 ## Última actualización
-2026-04-27 (sesión 3)
+2026-04-28 (sesión 4)
 
 ## Fase actual
 **Fase 4 — EN PROGRESO** — catálogos completos multi-motor, rama `fase-4`.
-**WP activo: WP1** — Yamaha multi-PDF
+**WP activo: WP2** — Volvo multi-motor
+
+---
+
+## Resultado de WP1 Fase 4 (cerrado)
+
+| Métrica | Valor |
+|---|---|
+| Registros enviados | 1.201 |
+| Engine models detectados | 1 (VF150A 2018) |
+| Articles únicos | 599 |
+| Compatibilities | 599 |
+| Errores | 0 |
+
+### Componentes entregados
+- `adapters/pdf_adapter.py` — soporte `data_dir` (multi-file) + `_detect_page1_model` con normalización de whitespace
+- `manufacturers/yamaha.py` — `data_dir=data/yamaha`, `page1_model_re` para auto-detección
+- `common/normalizer.py` — engine_models dinámicos (misma lógica que serial_ranges en Fase 3, un nivel más arriba)
+
+### Nota: PDF movido
+El PDF original `data/VF150LA (6EH6) 2018.pdf` fue movido a `data/yamaha/VF150LA (6EH6) 2018.pdf`.
+El usuario puede agregar más PDFs Yamaha al directorio `data/yamaha/` sin cambiar código.
+
+---
+
+## Próximo paso concreto
+
+**WP2 — Volvo multi-motor:** ampliar `manufacturers/volvo.py` para navegar dinámicamente todas las categorías de marinepartseurope.com.
+- Actualmente: un `product_path` hardcodeado (`/product/volvo-penta/tamd72p-a/`)
+- Objetivo: scrapear dinámicamente diesels, gasolina, genset, transmisiones
+- `engine_model` se deriva del nombre del producto en la página (no hardcodeado)
+- Validar en Docker al cierre
 
 ---
 
@@ -46,21 +77,11 @@
 
 ---
 
-## Próximo paso concreto
-
-Implementar `manufacturers/yamaha.py` multi-PDF:
-- Escanear directorio `/app/data/yamaha/` buscando PDFs
-- Extraer engine_model, year, serial_code de página 1 con regex: `([A-Z0-9]+)-(\d{4})\s*\(([A-Z0-9]+)\)`
-- Extender normalizer para engine_model dinámico (mismo patrón que serial_from en Fase 3)
-- Validar en Docker con múltiples PDFs
-
----
-
 ## Contexto de integración
 
 - **Endpoint Odoo:** `nautical.catalog.import` / `process_batch`
 - **Auth:** `catalog-sync@nautica.internal` / `catalog-sync-2026!`
-- **URL:** `http://localhost:8069` / DB: `nautica`
+- **URL:** `http://host.docker.internal:8069` (Docker) / DB: `nautica`
 - **Batch size:** 1.000 registros por llamado
 - **Orden de envío requerido:** brand → engine_model → engine_configuration → article → compatibility
 
