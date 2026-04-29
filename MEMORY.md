@@ -9,7 +9,7 @@
 
 ## Fase actual
 **Fase 5 — EN PROGRESO** — production readiness, rama `fase-5`.
-**WP activo: WP1** — quick fixes (error handling + logging + eliminar params de test).
+**WP activo: WP2** — streaming por familia (rediseño interfaz extract_fn).
 
 ---
 
@@ -70,15 +70,24 @@
 
 ---
 
+## Resultado WP1 Fase 5 (cerrado)
+
+| Métrica | Valor |
+|---|---|
+| Mercury dry-run | 3.439 válidos, 0 errores |
+| Volvo dry-run | 10.831 válidos, 0 errores |
+
+Componentes: error handling en `_collect_families`, `_collect_variants`, `_extract_variant` (mercruiser) y `_collect_products`, `_extract_product`, warm-up (volvo); logging de progreso global en ambos; params de test renombrados a `_test_*`.
+
 ## Próximo paso concreto
 
-**WP1 Fase 5 — implementar los 3 fixes:**
-1. `manufacturers/mercruiser.py`: try/except en `_collect_families`, `_collect_variants`, `_extract_variant`; contadores de progreso en `extract_mercruiser`; eliminar `max_variants_per_family` del CONFIG
-2. `manufacturers/volvo.py`: try/except en navegaciones; contadores de progreso en `extract_volvo`; eliminar `max_products_per_category` del CONFIG
-3. Validar en Docker dry-run con ambos fabricantes
+**WP2 Fase 5 — streaming por familia:**
+- Decidir interfaz: generador que yielda batches por familia vs. callback
+- `run.py`: iterar sobre batches — normalizar + enviar por cada uno
+- `mercruiser.py` y `volvo.py`: adaptar extract_fn para emitir por familia
+- Validar: registros aparecen en Odoo familia a familia (no al final)
 
-**WP2** (después): streaming por familia — generador en `extract_fn`, `run.py` normaliza+envía por batch.
-**Fase 6** (después de Fase 5): producción completa.
+**Fase 6** (después de Fase 5): producción completa Mercury, Volvo, Yamaha.
 
 ---
 
