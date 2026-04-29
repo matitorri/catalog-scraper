@@ -5,11 +5,11 @@
 ---
 
 ## Última actualización
-2026-04-28 (sesión 4)
+2026-04-29 (sesión 5)
 
 ## Fase actual
-**Fase 4 — EN PROGRESO** — catálogos completos multi-motor, rama `fase-4`.
-**WP activo: WP3** — Mercury multi-motor
+**Fase 4 — CERRADA** — todos los WPs completados, rama `fase-4` lista para merge a `main`.
+**Próximo paso: Gate Fase 4** — merge `fase-4` → `main`.
 
 ---
 
@@ -49,14 +49,30 @@
 
 ---
 
+## Resultado de WP3 Fase 4 (cerrado)
+
+| Métrica | Valor |
+|---|---|
+| Registros enviados | 51.783 |
+| Engine models detectados | 38 |
+| Engine configurations | 61 |
+| Articles únicos | 10.552 |
+| Compatibilities | 41.131 |
+| Errores | 0 |
+
+### Componentes entregados
+- `manufacturers/mercruiser.py` — navegación dinámica 5 categorías; `_collect_families`, `_collect_variants`, `_extract_variant`, `_parse_table` con `engine_model_name` en source_fields; `max_variants_per_family=1` para tests
+- `common/normalizer.py` — soporte 4 modos: engine_model_name+serial_ranges (Mercury multi), engine_model sin serial (Yamaha/Volvo), serial sin engine_model (Mercruiser single Fase 3), estático
+
+### Notas de producción
+- Para scraping completo: eliminar `max_variants_per_family` del CONFIG
+- Tiempo test (1 variante/familia, 5 categorías): ~2h
+
+---
+
 ## Próximo paso concreto
 
-**WP3 — Mercury multi-motor:** ampliar `manufacturers/mercruiser.py` para navegar dinámicamente todas las categorías de mercruiserparts.com.
-- Actualmente: `variant_path` hardcodeado a `350 MAG MPI Alpha/Bravo`
-- Objetivo: scrapear dinámicamente desde las categorías (gas sterndrive, diesel sterndrive, inboard, towsports, etc.)
-- `engine_model` = nombre de la variante en la página
-- La estructura de mercruiserparts.com tiene 5 niveles de navegación (ver Fase 3 en PLAN_IMPLEMENTACION.md)
-- Validar en Docker con subset antes de producción
+**Gate Fase 4:** merge `fase-4` → `main`.
 
 ---
 
