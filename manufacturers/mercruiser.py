@@ -99,99 +99,116 @@ def _parse_table(page, section, serial_from, serial_to, source_id, engine_model_
 
 
 def _collect_families(page, category_path, family_prefix):
-    page.goto(BASE_URL + category_path, wait_until="networkidle", timeout=60000)
-    anchors = page.query_selector_all("a[href]")
-    families = []
-    seen = set()
-    for a in anchors:
-        href = a.get_attribute("href") or ""
-        name = a.inner_text().strip()
-        if href.startswith(family_prefix) and name and href not in seen:
-            seen.add(href)
-            families.append((href, name))
-    return families
+    try:
+        page.goto(BASE_URL + category_path, wait_until="networkidle", timeout=60000)
+        anchors = page.query_selector_all("a[href]")
+        families = []
+        seen = set()
+        for a in anchors:
+            href = a.get_attribute("href") or ""
+            name = a.inner_text().strip()
+            if href.startswith(family_prefix) and name and href not in seen:
+                seen.add(href)
+                families.append((href, name))
+        return families
+    except Exception as e:
+        print(f"    ADVERTENCIA: no se pudo cargar categoría {category_path} — {e}")
+        return []
 
 
 def _collect_variants(page, family_href):
-    page.goto(BASE_URL + family_href, wait_until="networkidle", timeout=60000)
-    content_id = _family_content_id(family_href)
-    variant_prefix = "/" + content_id + "-"
-    anchors = page.query_selector_all("a[href]")
-    variants = []
-    seen = set()
-    for a in anchors:
-        href = a.get_attribute("href") or ""
-        name = a.inner_text().strip()
-        if href.startswith(variant_prefix) and name and href not in seen:
-            seen.add(href)
-            variants.append((href, name))
-    return variants
+    try:
+        page.goto(BASE_URL + family_href, wait_until="networkidle", timeout=60000)
+        content_id = _family_content_id(family_href)
+        variant_prefix = "/" + content_id + "-"
+        anchors = page.query_selector_all("a[href]")
+        variants = []
+        seen = set()
+        for a in anchors:
+            href = a.get_attribute("href") or ""
+            name = a.inner_text().strip()
+            if href.startswith(variant_prefix) and name and href not in seen:
+                seen.add(href)
+                variants.append((href, name))
+        return variants
+    except Exception as e:
+        print(f"      ADVERTENCIA: no se pudo cargar familia {family_href} — {e}")
+        return []
 
 
 def _extract_variant(page, variant_href, engine_model_name, source_id):
-    records = []
-    page.goto(BASE_URL + variant_href, wait_until="networkidle", timeout=60000)
+    try:
+        records = []
+        page.goto(BASE_URL + variant_href, wait_until="networkidle", timeout=60000)
 
-    anchors = page.query_selector_all("a[href]")
-    serial_ranges = []
-    for a in anchors:
-        href = a.get_attribute("href") or ""
-        text = a.inner_text().strip()
-        if not href.startswith("/") or not text:
-            continue
-        if "thru" in href.lower() or re.search(r'-up(-\d+)?$', href.lower()):
-            serial_from, serial_to = _parse_serial_range(text)
-            if serial_from:
-                serial_ranges.append((href, serial_from, serial_to))
-
-    print(f"        Rangos seriales: {len(serial_ranges)}")
-
-    for sr_href, serial_from, serial_to in serial_ranges:
-        label = f"{serial_from} — {serial_to or '& Up'}"
-        print(f"        Serial range: {label}")
-
-        page.goto(BASE_URL + sr_href, wait_until="networkidle", timeout=60000)
-        sub_anchors = page.query_selector_all("a[href*='/bam/subassemblydetail/']")
-        sub_items = [
-            (a.get_attribute("href") or "", a.inner_text().strip())
-            for a in sub_anchors
-        ]
-        print(f"          Subsistemas: {len(sub_items)}")
-
-        for sub_href, section in sub_items:
-            url = BASE_URL + sub_href if sub_href.startswith("/") else sub_href
-            page.goto(url, wait_until="domcontentloaded", timeout=60000)
-            if not _wait_table(page):
-                print(f"          ADVERTENCIA: tabla no apareció en {section}")
+        anchors = page.query_selector_all("a[href]")
+        serial_ranges = []
+        for a in anchors:
+            href = a.get_attribute("href") or ""
+            text = a.inner_text().strip()
+            if not href.startswith("/") or not text:
                 continue
+            if "thru" in href.lower() or re.search(r'-up(-\d+)?$', href.lower()):
+                serial_from, serial_to = _parse_serial_range(text)
+                if serial_from:
+                    serial_ranges.append((href, serial_from, serial_to))
 
-            recs = _parse_table(page, section, serial_from, serial_to, source_id, engine_model_name)
-            records.extend(recs)
+        print(f"        Rangos seriales: {len(serial_ranges)}")
 
-        time.sleep(1)
+        for sr_href, serial_from, serial_to in serial_ranges:
+            label = f"{serial_from} — {serial_to or '& Up'}"
+            print(f"        Serial range: {label}")
 
-    return records
+            page.goto(BASE_URL + sr_href, wait_until="networkidle", timeout=60000)
+            sub_anchors = page.query_selector_all("a[href*='/bam/subassemblydetail/']")
+            sub_items = [
+                (a.get_attribute("href") or "", a.inner_text().strip())
+                for a in sub_anchors
+            ]
+            print(f"          Subsistemas: {len(sub_items)}")
+
+            for sub_href, section in sub_items:
+                url = BASE_URL + sub_href if sub_href.startswith("/") else sub_href
+                page.goto(url, wait_until="domcontentloaded", timeout=60000)
+                if not _wait_table(page):
+                    print(f"          ADVERTENCIA: tabla no apareció en {section}")
+                    continue
+
+                recs = _parse_table(page, section, serial_from, serial_to, source_id, engine_model_name)
+                records.extend(recs)
+
+            time.sleep(1)
+
+        return records
+    except Exception as e:
+        print(f"        ADVERTENCIA: variante saltada ({variant_href}) — {e}")
+        return []
 
 
 def extract_mercruiser(page, config):
     source_id = config["source_id"]
-    max_variants = config.get("max_variants_per_family")
     all_records = []
+    n_cats = len(CATEGORIES)
 
-    for cat_path, family_prefix, cat_label in CATEGORIES:
-        print(f"  Categoría: {cat_label}")
+    _max_families = config.get("_test_max_families")  # solo para validación, no usar en producción
+    _max_variants = config.get("_test_max_variants")  # solo para validación, no usar en producción
+
+    for cat_idx, (cat_path, family_prefix, cat_label) in enumerate(CATEGORIES, 1):
+        print(f"  Categoría {cat_idx}/{n_cats}: {cat_label}")
         families = _collect_families(page, cat_path, family_prefix)
-        print(f"    Familias: {len(families)}")
+        n_fam = len(families)
+        print(f"    Familias: {n_fam}")
 
-        for fam_href, fam_name in families:
-            print(f"    Familia: {fam_name}")
+        for fam_idx, (fam_href, fam_name) in enumerate(families[:_max_families] if _max_families else families, 1):
+            print(f"    Familia {fam_idx}/{n_fam}: {fam_name}")
             variants = _collect_variants(page, fam_href)
-            if max_variants:
-                variants = variants[:max_variants]
-            print(f"      Variantes: {len(variants)}")
+            if _max_variants:
+                variants = variants[:_max_variants]
+            n_var = len(variants)
+            print(f"      Variantes: {n_var}")
 
-            for var_href, var_name in variants:
-                print(f"      Variante: {var_name}")
+            for var_idx, (var_href, var_name) in enumerate(variants, 1):
+                print(f"      Variante {var_idx}/{n_var}: {var_name} — acumulado: {len(all_records)}")
                 recs = _extract_variant(page, var_href, var_name, source_id)
                 all_records.extend(recs)
 
@@ -201,12 +218,13 @@ def extract_mercruiser(page, config):
 ADAPTER = WebAdapter
 
 CONFIG = {
-    "source_id":  "mercruiser_web",
-    "extract_fn": extract_mercruiser,
+    "source_id":       "mercruiser_web",
+    "extract_fn":      extract_mercruiser,
+    "_test_max_families": 1,  # remover antes de producción
+    "_test_max_variants": 1,  # remover antes de producción
 
     "brand": {
         "name":       "Mercury Marine",
         "brand_type": "oem",
     },
-    "max_variants_per_family": 1,
 }

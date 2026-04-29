@@ -86,55 +86,63 @@ def _parse_table(page, section, source_id, engine_model_name):
 
 def _collect_products(page, engine_url):
     """Navega al listing de la categoría y retorna lista de (engine_model_name, product_path)."""
-    page.goto(BASE_URL + engine_url, wait_until="domcontentloaded", timeout=60000)
-    _wait(page, "a[href*='/product/']", timeout=_BLAZOR_TIMEOUT)
+    try:
+        page.goto(BASE_URL + engine_url, wait_until="domcontentloaded", timeout=60000)
+        _wait(page, "a[href*='/product/']", timeout=_BLAZOR_TIMEOUT)
 
-    products = page.evaluate("""
-        () => Array.from(document.querySelectorAll('a[href]'))
-            .map(a => ({href: a.href, text: a.innerText.trim()}))
-            .filter(l => l.href.includes('/product/')
-                      && !l.href.includes('/explodedview/')
-                      && l.text.length > 0)
-    """)
+        products = page.evaluate("""
+            () => Array.from(document.querySelectorAll('a[href]'))
+                .map(a => ({href: a.href, text: a.innerText.trim()}))
+                .filter(l => l.href.includes('/product/')
+                          && !l.href.includes('/explodedview/')
+                          && l.text.length > 0)
+        """)
 
-    seen = set()
-    result = []
-    for p in products:
-        path = p['href'].replace(BASE_URL, "")
-        if path not in seen:
-            seen.add(path)
-            result.append((p['text'], path))
-    return result
+        seen = set()
+        result = []
+        for p in products:
+            path = p['href'].replace(BASE_URL, "")
+            if path not in seen:
+                seen.add(path)
+                result.append((p['text'], path))
+        return result
+    except Exception as e:
+        print(f"    ADVERTENCIA: no se pudo cargar categoría {engine_url} — {e}")
+        return []
 
 
 def _extract_product(page, product_path, engine_model_name, source_id):
     """Navega al producto y extrae todas sus partes desde los explodedviews."""
-    page.goto(BASE_URL + product_path, wait_until="domcontentloaded", timeout=60000)
-    if not _wait(page, "a[href*='/explodedview/']"):
-        print(f"      ADVERTENCIA: sin explodedviews")
+    try:
+        page.goto(BASE_URL + product_path, wait_until="domcontentloaded", timeout=60000)
+        if not _wait(page, "a[href*='/explodedview/']"):
+            print(f" ADVERTENCIA: sin explodedviews")
+            return []
+
+        # Extraer hrefs ANTES de navegar (evita stale handles)
+        anchors = page.query_selector_all("a[href]")
+        ev_links = []
+        for a in anchors:
+            href = a.get_attribute("href") or ""
+            if "/explodedview/" in href:
+                path = href.replace(BASE_URL, "") if href.startswith(BASE_URL) else href
+                ev_links.append(path)
+        ev_links = list(dict.fromkeys(ev_links))
+
+        records = []
+        for ev_link in ev_links:
+            section = _section_from_url(ev_link)
+            page.goto(BASE_URL + ev_link, wait_until="domcontentloaded", timeout=60000)
+            if not _wait(page, "table tbody tr"):
+                continue
+            recs = _parse_table(page, section, source_id, engine_model_name)
+            records.extend(recs)
+            time.sleep(1)
+
+        return records
+    except Exception as e:
+        print(f" ADVERTENCIA: motor saltado ({product_path}) — {e}")
         return []
-
-    # Extraer hrefs ANTES de navegar (evita stale handles)
-    anchors = page.query_selector_all("a[href]")
-    ev_links = []
-    for a in anchors:
-        href = a.get_attribute("href") or ""
-        if "/explodedview/" in href:
-            path = href.replace(BASE_URL, "") if href.startswith(BASE_URL) else href
-            ev_links.append(path)
-    ev_links = list(dict.fromkeys(ev_links))
-
-    records = []
-    for ev_link in ev_links:
-        section = _section_from_url(ev_link)
-        page.goto(BASE_URL + ev_link, wait_until="domcontentloaded", timeout=60000)
-        if not _wait(page, "table tbody tr"):
-            continue
-        recs = _parse_table(page, section, source_id, engine_model_name)
-        records.extend(recs)
-        time.sleep(1)
-
-    return records
 
 
 def extract_volvo(page, config):
@@ -144,23 +152,29 @@ def extract_volvo(page, config):
     # Warm-up: la app Blazor requiere al menos una navegación a un producto
     # para inicializar el estado de sesión antes de poder usar los listings
     print("  Inicializando sesión Blazor...")
-    page.goto(BASE_URL + _WARMUP_URL, wait_until="domcontentloaded", timeout=60000)
-    _wait(page, "a[href*='/explodedview/']")
-    print("  OK")
+    try:
+        page.goto(BASE_URL + _WARMUP_URL, wait_until="domcontentloaded", timeout=60000)
+        _wait(page, "a[href*='/explodedview/']")
+        print("  OK")
+    except Exception as e:
+        print(f"  ADVERTENCIA: warm-up falló — {e}. Los listings pueden no funcionar.")
 
-    max_per_cat = config.get("max_products_per_category")
+    categories = config.get("categories", [])
+    n_cats = len(categories)
+    _max_per_cat = config.get("_test_max_per_cat")  # solo para validación, no usar en producción
 
-    for engine_url, cat_name in config.get("categories", []):
-        print(f"\n  Categoría: {cat_name}")
+    for cat_idx, (engine_url, cat_name) in enumerate(categories, 1):
+        print(f"\n  Categoría {cat_idx}/{n_cats}: {cat_name}")
         products = _collect_products(page, engine_url)
-        if max_per_cat:
-            products = products[:max_per_cat]
-        print(f"  {len(products)} motores")
+        n_prod = len(products)
+        print(f"  {n_prod} motores")
+        if _max_per_cat:
+            products = products[:_max_per_cat]
 
-        for engine_model_name, product_path in products:
-            print(f"    [{engine_model_name}] ", end="", flush=True)
+        for prod_idx, (engine_model_name, product_path) in enumerate(products, 1):
+            print(f"    [{prod_idx}/{n_prod}] {engine_model_name} — acumulado: {len(all_records)}", end="", flush=True)
             records = _extract_product(page, product_path, engine_model_name, source_id)
-            print(f"{len(records)} partes")
+            print(f" → {len(records)} partes")
             all_records.extend(records)
 
     return all_records
@@ -169,8 +183,9 @@ def extract_volvo(page, config):
 ADAPTER = WebAdapter
 
 CONFIG = {
-    "source_id":  "volvo_web",
-    "extract_fn": extract_volvo,
+    "source_id":        "volvo_web",
+    "extract_fn":       extract_volvo,
+    "_test_max_per_cat": 1,  # remover antes de producción
     "categories": [
         ("/en/dealer/other/engine/marine%20diesel%20engines",             "marine diesel engines"),
         ("/en/dealer/other/engine/marine%20diesel%20engines%20genset",    "marine diesel engines genset"),
