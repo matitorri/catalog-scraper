@@ -8,7 +8,8 @@
 2026-04-29 (sesión 5)
 
 ## Fase actual
-**Fase 4 — CERRADA y MERGEADA** — WP1 + WP2 + WP3 completados. Merge a `main` ejecutado (sesión 5, 2026-04-29). Commit: `58eb8c1`.
+**Fase 5 — EN PROGRESO** — production readiness, rama `fase-5`.
+**WP activo: WP1** — quick fixes (error handling + logging + eliminar params de test).
 
 ---
 
@@ -71,14 +72,13 @@
 
 ## Próximo paso concreto
 
-**Fase 5 — WP1:** quick fixes de producción.
-- try/except en `_extract_variant`, `_collect_families`, `_collect_variants` (mercruiser + volvo)
-- Contadores de progreso global en `extract_mercruiser` y `extract_volvo`
-- Eliminar `max_variants_per_family` de `mercruiser.py` y `max_products_per_category` de `volvo.py`
+**WP1 Fase 5 — implementar los 3 fixes:**
+1. `manufacturers/mercruiser.py`: try/except en `_collect_families`, `_collect_variants`, `_extract_variant`; contadores de progreso en `extract_mercruiser`; eliminar `max_variants_per_family` del CONFIG
+2. `manufacturers/volvo.py`: try/except en navegaciones; contadores de progreso en `extract_volvo`; eliminar `max_products_per_category` del CONFIG
+3. Validar en Docker dry-run con ambos fabricantes
 
-**Fase 5 — WP2** (después de WP1): streaming por familia — rediseño de interfaz `extract_fn` → generador o callback; `run.py` normaliza y envía por batch.
-
-**Fase 6** (después de Fase 5): producción completa Mercury, Volvo, Yamaha.
+**WP2** (después): streaming por familia — generador en `extract_fn`, `run.py` normaliza+envía por batch.
+**Fase 6** (después de Fase 5): producción completa.
 
 ---
 
