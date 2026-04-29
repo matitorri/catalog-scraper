@@ -5,10 +5,11 @@
 ---
 
 ## Última actualización
-2026-04-29 (sesión 5)
+2026-04-29 (sesión 5 — continuada)
 
 ## Fase actual
-**Fase 4 — CERRADA y MERGEADA** — WP1 + WP2 + WP3 completados. Merge a `main` ejecutado (sesión 5, 2026-04-29). Commit: `58eb8c1`.
+**Fase 5 — COMPLETA** — todos los WPs cerrados, listo para merge a main y apertura de Fase 6.
+**Próximo paso:** gate Fase 5 (merge a main) + apertura Fase 6 (producción completa).
 
 ---
 
@@ -69,16 +70,36 @@
 
 ---
 
+## Resultado WP1 Fase 5 (cerrado)
+
+| Métrica | Valor |
+|---|---|
+| Mercury dry-run | 3.439 válidos, 0 errores |
+| Volvo dry-run | 10.831 válidos, 0 errores |
+
+Componentes: error handling en `_collect_families`, `_collect_variants`, `_extract_variant` (mercruiser) y `_collect_products`, `_extract_product`, warm-up (volvo); logging de progreso global en ambos; params de test renombrados a `_test_*`.
+
+## Resultado WP2 Fase 5 (cerrado)
+
+| Métrica | Valor |
+|---|---|
+| Mercury dry-run | 3.497 válidos, 3 lotes, 0 errores |
+| Volvo dry-run | 11.891 válidos, 5 lotes, 0 errores |
+
+### Componentes entregados
+- `adapters/web_adapter.py` — `extract_streaming(config, on_batch)`: itera generador con browser abierto
+- `manufacturers/mercruiser.py` — `extract_mercruiser` es generador: yield por familia completa
+- `manufacturers/volvo.py` — `extract_volvo` es generador: yield por motor
+- `run.py` — detecta `extract_streaming` → normaliza+envía por lote; fallback batch clásico para PDF
+
+### Notas
+- Yamaha (PDF adapter) usa el path clásico sin cambios — backward compatible
+- Crash a hora N preserva las primeras N horas en Odoo; re-run es seguro por upsert
+
 ## Próximo paso concreto
 
-**Fase 5 — WP1:** quick fixes de producción.
-- try/except en `_extract_variant`, `_collect_families`, `_collect_variants` (mercruiser + volvo)
-- Contadores de progreso global en `extract_mercruiser` y `extract_volvo`
-- Eliminar `max_variants_per_family` de `mercruiser.py` y `max_products_per_category` de `volvo.py`
-
-**Fase 5 — WP2** (después de WP1): streaming por familia — rediseño de interfaz `extract_fn` → generador o callback; `run.py` normaliza y envía por batch.
-
-**Fase 6** (después de Fase 5): producción completa Mercury, Volvo, Yamaha.
+**Gate Fase 5** — merge de `fase-5` a `main`.
+**Fase 6** — producción completa: Mercury, Volvo, Yamaha (remover `_test_max_*` de CONFIGs).
 
 ---
 

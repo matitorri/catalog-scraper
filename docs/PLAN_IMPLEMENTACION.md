@@ -325,8 +325,8 @@ El normalizer garantiza el orden `brand → engine_model → engine_configuratio
 
 | WP | Descripción | Estado |
 |---|---|---|
-| WP1 | Quick fixes — error handling, logging, eliminar params de test | Pendiente |
-| WP2 | Streaming por familia — rediseño de interfaz extract_fn para envío incremental | Pendiente |
+| WP1 | Quick fixes — error handling, logging, eliminar params de test | ✓ Completado |
+| WP2 | Streaming por familia — rediseño de interfaz extract_fn para envío incremental | ✓ Completado |
 
 ### WP1 — Quick fixes
 

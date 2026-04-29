@@ -48,3 +48,25 @@ class WebAdapter(BaseAdapter):
                 browser.close()
 
         return records
+
+    def extract_streaming(self, config: dict, on_batch) -> None:
+        """Extrae en modo streaming: llama on_batch(records) por cada lote que emite extract_fn."""
+        extract_fn = config["extract_fn"]
+
+        with sync_playwright() as p:
+            browser = p.chromium.launch(
+                headless=True,
+                args=["--no-sandbox", "--disable-setuid-sandbox"],
+            )
+            context = browser.new_context(
+                user_agent=config.get("user_agent", DEFAULT_USER_AGENT),
+                viewport=config.get("viewport", {"width": 1440, "height": 900}),
+                locale="en-US",
+            )
+            page = context.new_page()
+
+            try:
+                for batch in extract_fn(page, config):
+                    on_batch(batch)
+            finally:
+                browser.close()
