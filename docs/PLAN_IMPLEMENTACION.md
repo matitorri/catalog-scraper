@@ -316,3 +316,66 @@ El normalizer garantiza el orden `brand → engine_model → engine_configuratio
 **engine_model:** derivado del nombre de la variante en la página.
 
 **Criterio de cierre:** catálogo completo Mercury Marine procesado, engine_model por cada variante, artículos deduplicados. Validado en Docker.
+
+---
+
+## Fase 5
+
+**Objetivo:** preparar el pipeline para runs de producción de larga duración (20-150h). Tres problemas críticos a resolver antes de correr catálogos completos: falta de error handling por variante, envío monolítico al final del run (crash = trabajo perdido), y logging insuficiente para monitorear runs largos.
+
+| WP | Descripción | Estado |
+|---|---|---|
+| WP1 | Quick fixes — error handling, logging, eliminar params de test | Pendiente |
+| WP2 | Streaming por familia — rediseño de interfaz extract_fn para envío incremental | Pendiente |
+
+### WP1 — Quick fixes
+
+**Objetivo:** tres cambios de bajo costo que hacen el scraper más robusto para runs largos.
+
+**Cambios:**
+- `_extract_variant` y `_collect_families`/`_collect_variants`: envolver en try/except — si una variante falla, loggear y continuar (no matar el run)
+- `extract_mercruiser` y `extract_volvo`: agregar contadores de progreso global (familia N/M, categoría N/M, registros acumulados)
+- `manufacturers/mercruiser.py` y `manufacturers/volvo.py`: eliminar `max_variants_per_family` y `max_products_per_category` de los CONFIGs
+
+**Criterio de cierre:** dry-run de Mercury y Volvo sin params de test, error handling verificado con una variante que falle intencionalmente. Validado en Docker.
+
+---
+
+### WP2 — Streaming por familia
+
+**Objetivo:** en lugar de acumular todos los registros en memoria y enviar al final, normalizar y enviar a Odoo después de completar cada familia. Si el run falla, las familias ya procesadas están persistidas en Odoo — upsert garantiza que re-correr desde el inicio es seguro.
+
+**Cambios:**
+- Rediseñar la interfaz entre `extract_fn` y `run.py`: `extract_fn` pasa a ser un generador que yielda batches de records por familia, o acepta un callback de envío
+- `run.py`: iterar sobre el generador — por cada batch: normalizar → enviar → continuar
+- `manufacturers/mercruiser.py` y `manufacturers/volvo.py`: adaptar para emitir por familia
+
+**Criterio de cierre:** run de Mercury con streaming verificado — registros aparecen en Odoo familia a familia, no todos al final. Crash simulado a mitad del run: Odoo retiene los datos de las familias previas. Validado en Docker.
+
+---
+
+## Fase 6
+
+**Objetivo:** correr los catálogos completos de los tres fabricantes en producción.
+
+| WP | Descripción | Estado |
+|---|---|---|
+| WP1 | Mercury producción completa | Pendiente |
+| WP2 | Volvo producción completa | Pendiente |
+| WP3 | Yamaha producción completa | Pendiente |
+
+### WP1 — Mercury producción
+
+**Criterio de cierre:** catálogo Mercury completo en Odoo. Todas las categorías procesadas, 0 errores de envío.
+
+---
+
+### WP2 — Volvo producción
+
+**Criterio de cierre:** catálogo Volvo completo en Odoo. Todas las categorías procesadas, 0 errores de envío.
+
+---
+
+### WP3 — Yamaha producción
+
+**Criterio de cierre:** todos los PDFs Yamaha disponibles procesados en Odoo, 0 errores.

@@ -8,8 +8,7 @@
 2026-04-29 (sesión 5)
 
 ## Fase actual
-**Fase 4 — CERRADA** — todos los WPs completados, rama `fase-4` lista para merge a `main`.
-**Próximo paso: Gate Fase 4** — merge `fase-4` → `main`.
+**Fase 4 — CERRADA y MERGEADA** — WP1 + WP2 + WP3 completados. Merge a `main` ejecutado (sesión 5, 2026-04-29). Commit: `58eb8c1`.
 
 ---
 
@@ -72,7 +71,14 @@
 
 ## Próximo paso concreto
 
-**Gate Fase 4:** merge `fase-4` → `main`.
+**Fase 5 — WP1:** quick fixes de producción.
+- try/except en `_extract_variant`, `_collect_families`, `_collect_variants` (mercruiser + volvo)
+- Contadores de progreso global en `extract_mercruiser` y `extract_volvo`
+- Eliminar `max_variants_per_family` de `mercruiser.py` y `max_products_per_category` de `volvo.py`
+
+**Fase 5 — WP2** (después de WP1): streaming por familia — rediseño de interfaz `extract_fn` → generador o callback; `run.py` normaliza y envía por batch.
+
+**Fase 6** (después de Fase 5): producción completa Mercury, Volvo, Yamaha.
 
 ---
 
