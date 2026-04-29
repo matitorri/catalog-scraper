@@ -319,7 +319,7 @@ El normalizer garantiza el orden `brand → engine_model → engine_configuratio
 
 ---
 
-## Fase 5
+## Fase 5 ✓ Cerrada (2026-04-29)
 
 **Objetivo:** preparar el pipeline para runs de producción de larga duración (20-150h). Tres problemas críticos a resolver antes de correr catálogos completos: falta de error handling por variante, envío monolítico al final del run (crash = trabajo perdido), y logging insuficiente para monitorear runs largos.
 

@@ -5,11 +5,11 @@
 ---
 
 ## Última actualización
-2026-04-29 (sesión 5 — continuada)
+2026-04-29 (sesión 5 — cierre)
 
 ## Fase actual
-**Fase 5 — COMPLETA** — todos los WPs cerrados, listo para merge a main y apertura de Fase 6.
-**Próximo paso:** gate Fase 5 (merge a main) + apertura Fase 6 (producción completa).
+**Fase 5 — CERRADA** — merge a main completado 2026-04-29.
+**Fase 6 en espera** — producción completa bloqueada hasta que sistema-gestion-nautica esté listo para producción. No hay rama activa.
 
 ---
 
@@ -98,8 +98,11 @@ Componentes: error handling en `_collect_families`, `_collect_variants`, `_extra
 
 ## Próximo paso concreto
 
-**Gate Fase 5** — merge de `fase-5` a `main`.
-**Fase 6** — producción completa: Mercury, Volvo, Yamaha (remover `_test_max_*` de CONFIGs).
+**Cuando sistema-gestion-nautica esté listo para producción:**
+1. Abrir rama `fase-6`
+2. Remover `_test_max_*` de CONFIGs de Mercury y Volvo
+3. Correr producción completa: Mercury (~870 motores), Volvo (~870 motores), Yamaha (PDFs)
+4. Tiempo estimado: varios días en corridas secuenciales por categoría
 
 ---
 
