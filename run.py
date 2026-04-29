@@ -35,8 +35,10 @@ def main():
           ', '.join(f"{counts[rt]} {rt}" for rt in ['brand', 'engine_model', 'engine_configuration', 'article', 'compatibility'] if counts.get(rt)))
     if rejected:
         print(f"      {len(rejected)} rechazados:")
-        for r in rejected:
+        for r in rejected[:10]:
             print(f"        {r['error']} — {r['source_fields'].get('part_no', '?')}")
+        if len(rejected) > 10:
+            print(f"        ... y {len(rejected) - 10} más")
 
     if args.dry_run:
         print("[3/3] Dry-run — envío omitido.")

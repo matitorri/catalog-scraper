@@ -1,3 +1,5 @@
+import glob
+import os
 import re
 import pdfplumber
 from adapters.base import BaseAdapter
@@ -83,19 +85,64 @@ def _parse_line(line):
     }
 
 
+def _detect_page1_model(pdf, pattern_str: str) -> dict | None:
+    """Extrae engine_model_name, year y serial_code de la página 1 del PDF."""
+    if not pdf.pages:
+        return None
+    text = pdf.pages[0].extract_text() or ''
+    # Normalizar saltos de línea y espacios múltiples para que el regex funcione
+    # aunque el modelo y el serial code estén en líneas separadas
+    text_normalized = re.sub(r'\s+', ' ', text)
+    m = re.search(pattern_str, text_normalized)
+    if not m:
+        return None
+    return {
+        'engine_model_name': m.group(1),
+        'year': int(m.group(2)),
+        'serial_code': m.group(3),
+    }
+
+
 class PdfAdapter(BaseAdapter):
 
     def extract(self, config: dict) -> list[dict]:
         """
-        Extrae artículos desde un PDF de catálogo de partes.
+        Extrae artículos desde uno o varios PDFs de catálogo de partes.
 
         config keys:
-          file_path       str   ruta al PDF
-          source_id       str   identificador de la fuente (ej: "yamaha_pdf")
-          skip_until_fig  bool  saltar páginas hasta encontrar la primera FIG (default True)
-          stop_at_marker  str   texto en primera línea que indica fin de datos (ej: "NUMERICAL INDEX")
+          file_path       str   ruta a un PDF (modo single-file)
+          data_dir        str   directorio con PDFs *.pdf (modo multi-file)
+          page1_model_re  str   regex para detectar modelo en página 1 (multi-file)
+          source_id       str   identificador de la fuente
+          skip_until_fig  bool  saltar páginas hasta la primera FIG (default True)
+          stop_at_marker  str   texto que indica fin de datos (ej: "NUMERICAL INDEX")
         """
-        file_path = config['file_path']
+        if 'data_dir' in config:
+            return self._extract_directory(config)
+        return self._extract_file(config, config['file_path'], page1_meta=None)
+
+    def _extract_directory(self, config: dict) -> list[dict]:
+        data_dir = config['data_dir']
+        pattern = config.get('page1_model_re')
+        all_records = []
+        pdf_files = sorted(glob.glob(os.path.join(data_dir, '*.pdf')))
+        if not pdf_files:
+            print(f"  [warn] No se encontraron PDFs en {data_dir}")
+            return []
+        for pdf_path in pdf_files:
+            page1_meta = None
+            if pattern:
+                with pdfplumber.open(pdf_path) as pdf:
+                    page1_meta = _detect_page1_model(pdf, pattern)
+                if page1_meta is None:
+                    print(f"  [skip] {os.path.basename(pdf_path)} — modelo no detectado en página 1")
+                    continue
+                print(f"  [pdf] {os.path.basename(pdf_path)} → {page1_meta['engine_model_name']} ({page1_meta['year']})")
+            records = self._extract_file(config, pdf_path, page1_meta)
+            all_records.extend(records)
+        return all_records
+
+    def _extract_file(self, config: dict, file_path: str, page1_meta: dict | None) -> list[dict]:
         source_id = config['source_id']
         skip_until_fig = config.get('skip_until_fig', True)
         stop_at_marker = config.get('stop_at_marker', 'NUMERICAL INDEX')
@@ -140,8 +187,12 @@ class PdfAdapter(BaseAdapter):
                     if parsed is None:
                         continue
 
+                    source_fields = {**parsed, 'category': current_category}
+                    if page1_meta:
+                        source_fields.update(page1_meta)
+
                     records.append({
-                        'source_fields': {**parsed, 'category': current_category},
+                        'source_fields': source_fields,
                         'meta': {
                             'source_id': source_id,
                             'record_type': 'article',

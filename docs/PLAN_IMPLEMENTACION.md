@@ -161,9 +161,9 @@ python run.py --manufacturer yamaha --dry-run   # extrae y normaliza, no envía
 
 | Fabricante | Adapter | Fuente | Estado |
 |---|---|---|---|
-| Yamaha | PdfAdapter | PDF catálogo | Fase 1 |
-| Volvo Penta | WebAdapter | Web scraping | Fase 2 |
-| Mercury Marine | WebAdapter | Web scraping | Fase 3 |
+| Yamaha | PdfAdapter | PDF catálogo | Fase 1 → Fase 4 (multi-motor) |
+| Volvo Penta | WebAdapter | Web scraping | Fase 2 → Fase 4 (multi-motor) |
+| Mercury Marine | WebAdapter | Web scraping | Fase 3 → Fase 4 (multi-motor) |
 
 ---
 
@@ -266,3 +266,53 @@ El normalizer garantiza el orden `brand → engine_model → engine_configuratio
 
 ### Re-envío de errores
 `process_batch` es idempotente. Los registros con `status: error` pueden re-enviarse en la siguiente ejecución sin riesgo de duplicados.
+
+---
+
+## Fase 4
+
+**Objetivo:** catálogos completos para los tres fabricantes. Cada uno cubre todos sus motores — sin hardcoding de un motor específico. El usuario monta los PDFs o lanza el scraper y obtiene el catálogo completo.
+
+**Principio clave:** Odoo implementa upsert en `process_batch` para todos los record_types. Ejecutar el mismo fabricante múltiples veces es seguro — artículos compartidos entre motores se consolidan en Odoo, no se duplican. Las ejecuciones pueden dividirse por lotes sin restricción.
+
+| WP | Descripción | Estado |
+|---|---|---|
+| WP1 | Yamaha multi-PDF — auto-detección de engine_model desde página 1 | ✓ Completado |
+| WP2 | Volvo multi-motor — navegación dinámica de categorías | ✓ Completado |
+| WP3 | Mercury multi-motor — navegación dinámica de todas las categorías | ✓ Completado |
+
+### WP1 — Yamaha multi-PDF
+
+**Objetivo:** `manufacturers/yamaha.py` pasa de un PDF hardcodeado a un directorio de PDFs. Cada PDF expone su propio `engine_model`, `year` y `serial_code` desde la página 1 del catálogo.
+
+**Auto-detección desde página 1:** regex sobre texto de página 1 → `([A-Z0-9]+)-(\d{4})\s*\(([A-Z0-9]+)\)` → extrae modelo, año y serial.
+
+**Normalizer:** extender soporte de `engine_model` dinámico (mismo patrón que `serial_from` en Fase 3 — si artículos llevan `engine_model_name` en `source_fields`, se generan dinámicamente).
+
+**Ejecución:** `docker run -v /ruta/yamaha/:/app/data/yamaha/ ... --manufacturer yamaha` procesa todos los PDFs del directorio.
+
+**Criterio de cierre:** múltiples PDFs Yamaha procesados en una ejecución, cada uno con su engine_model correcto, artículos deduplicados entre PDFs. Validado en Docker.
+
+---
+
+### WP2 — Volvo multi-motor
+
+**Objetivo:** `manufacturers/volvo.py` navega dinámicamente las categorías del catálogo de marinepartseurope.com en lugar de un `product_path` hardcodeado.
+
+**Categorías:** motores diesel, genset, transmisiones.
+
+**engine_model:** derivado del nombre del producto en la página (no hardcodeado).
+
+**Criterio de cierre:** catálogo completo de Volvo Penta procesado, engine_model por cada motor detectado, artículos deduplicados. Validado en Docker.
+
+---
+
+### WP3 — Mercury multi-motor
+
+**Objetivo:** `manufacturers/mercruiser.py` navega dinámicamente todas las categorías de mercruiserparts.com en lugar de un `variant_path` hardcodeado.
+
+**Categorías:** gas sterndrive, diesel sterndrive, inboard, towsports, y otras disponibles.
+
+**engine_model:** derivado del nombre de la variante en la página.
+
+**Criterio de cierre:** catálogo completo Mercury Marine procesado, engine_model por cada variante, artículos deduplicados. Validado en Docker.

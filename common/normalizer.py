@@ -2,6 +2,7 @@ RECORD_ORDER = ['brand', 'engine_model', 'engine_configuration', 'article', 'com
 
 # Claves de deduplicación por record_type (según INTEGRACION_SCRAPER.md)
 DEDUP_KEYS = {
+    'engine_model':         lambda p: (p['brand_name'], p['name']),
     'engine_configuration': lambda p: (p['brand_name'], p['engine_model_name'], p.get('serial_from'), p.get('serial_to')),
     'article':              lambda p: (p['ref_code'], p['brand_name']),
     'compatibility':        lambda p: (p['article_ref'], p['brand_name'], p['engine_model_name'], p.get('serial_from'), p.get('serial_to')),
@@ -23,14 +24,20 @@ def normalize(raw_records: list[dict], config: dict) -> tuple[list[dict], list[d
     Retorna (valid_records, rejected_records).
     valid_records están ordenados por record_type según dependencias de Odoo.
     rejected_records incluyen el motivo de rechazo en la clave 'error'.
+
+    Soporta cuatro modos según los campos presentes en source_fields:
+      - engine_model_name + serial_from: engine_models dinámicos con N configs por serial range (Mercury multi-motor)
+      - engine_model_name sin serial_from: engine_models dinámicos con config por año (Yamaha multi-PDF, Volvo)
+      - serial_from sin engine_model_name: configs dinámicas para engine_model estático del config (Mercury single Fase 3)
+      - ninguno: engine_model + engine_configuration estáticos desde config
     """
     source_id = config['source_id']
     brand_name = config['brand']['name']
-    engine_model_name = config['engine_model']['name']
+    static_engine_model_name = config.get('engine_model', {}).get('name')
+    engine_cfg = config.get('engine_configuration', {})
 
     normalized = {rt: [] for rt in RECORD_ORDER}
 
-    # 1. Registros fijos desde la config del fabricante
     normalized['brand'].append({
         'source': source_id,
         'record_type': 'brand',
@@ -40,20 +47,22 @@ def normalize(raw_records: list[dict], config: dict) -> tuple[list[dict], list[d
         },
     })
 
-    normalized['engine_model'].append({
-        'source': source_id,
-        'record_type': 'engine_model',
-        'payload': {
-            'name': engine_model_name,
-            'brand_name': brand_name,
-        },
-    })
+    # Si hay engine_model estático en config, emitirlo ahora.
+    # En modo dinámico, se emitirán después del loop.
+    if static_engine_model_name:
+        normalized['engine_model'].append({
+            'source': source_id,
+            'record_type': 'engine_model',
+            'payload': {
+                'name': static_engine_model_name,
+                'brand_name': brand_name,
+            },
+        })
 
-    engine_cfg = config['engine_configuration']
-
-    # 2. Artículos y compatibilidades desde los registros extraídos
     rejected = []
-    serial_ranges_seen = {}  # (serial_from, serial_to) → True
+    serial_ranges_seen = {}   # Mercruiser single: (serial_from, serial_to) → True
+    # engine_model_name → {year, serial_code, serial_ranges: set of (sf, st)}
+    engine_model_configs = {}
 
     for raw in raw_records:
         sf = raw['source_fields']
@@ -62,8 +71,28 @@ def normalize(raw_records: list[dict], config: dict) -> tuple[list[dict], list[d
         if record_type != 'article':
             continue
 
-        # Rastrear rangos seriales dinámicos (Mercruiser y similares)
-        if sf.get('serial_from'):
+        # engine_model_name: dinámico desde el artículo o estático desde config
+        article_engine_model = sf.get('engine_model_name') or static_engine_model_name
+        if not article_engine_model:
+            rejected.append({**raw, 'error': 'engine_model_name no determinable'})
+            continue
+
+        # Registrar engine_models dinámicos con sus serial ranges
+        if sf.get('engine_model_name'):
+            em_name = sf['engine_model_name']
+            if em_name not in engine_model_configs:
+                engine_model_configs[em_name] = {
+                    'year': sf.get('year'),
+                    'serial_code': sf.get('serial_code'),
+                    'serial_ranges': set(),
+                }
+            if sf.get('serial_from') is not None:
+                engine_model_configs[em_name]['serial_ranges'].add(
+                    (sf['serial_from'], sf.get('serial_to'))
+                )
+
+        # Registrar serial ranges para engine_model estático (Mercruiser single Fase 3)
+        elif sf.get('serial_from'):
             serial_ranges_seen[(sf['serial_from'], sf.get('serial_to'))] = True
 
         article_payload = {
@@ -93,7 +122,7 @@ def normalize(raw_records: list[dict], config: dict) -> tuple[list[dict], list[d
         compatibility_payload = {
             'article_ref':       sf['part_no'],
             'brand_name':        brand_name,
-            'engine_model_name': engine_model_name,
+            'engine_model_name': article_engine_model,
             'serial_from':       serial_from,
             'serial_to':         serial_to,
             'notes':             sf.get('remarks') or None,
@@ -110,8 +139,48 @@ def normalize(raw_records: list[dict], config: dict) -> tuple[list[dict], list[d
             'payload': compatibility_payload,
         })
 
-    # Engine configurations: dinámicas desde artículos (Mercruiser) o fijas desde config (Yamaha/Volvo)
-    if serial_ranges_seen:
+    # Generar engine_models y engine_configurations según el modo detectado
+    if engine_model_configs:
+        # Modo dinámico: Yamaha multi-PDF, Volvo, Mercury multi-motor
+        for em_name, em_data in engine_model_configs.items():
+            normalized['engine_model'].append({
+                'source': source_id,
+                'record_type': 'engine_model',
+                'payload': {'name': em_name, 'brand_name': brand_name},
+            })
+
+            if em_data['serial_ranges']:
+                # Tiene serial ranges: Mercury multi-motor — una config por rango
+                for (serial_from, serial_to) in em_data['serial_ranges']:
+                    normalized['engine_configuration'].append({
+                        'source': source_id,
+                        'record_type': 'engine_configuration',
+                        'payload': {
+                            'brand_name':        brand_name,
+                            'engine_model_name': em_name,
+                            'serial_from':       serial_from,
+                            'serial_to':         serial_to,
+                        },
+                    })
+            else:
+                # Sin serial ranges: Yamaha/Volvo — config simple con año si disponible
+                cfg_payload = {
+                    'brand_name':        brand_name,
+                    'engine_model_name': em_name,
+                }
+                if em_data.get('year'):
+                    cfg_payload['year_from'] = em_data['year']
+                    cfg_payload['year_to']   = em_data['year']
+                if em_data.get('serial_code'):
+                    cfg_payload['notes'] = f"Serie {em_data['serial_code']}"
+                normalized['engine_configuration'].append({
+                    'source': source_id,
+                    'record_type': 'engine_configuration',
+                    'payload': cfg_payload,
+                })
+
+    elif serial_ranges_seen:
+        # Modo Mercruiser single (Fase 3): serial ranges dinámicos para engine_model estático
         for (serial_from, serial_to) in serial_ranges_seen:
             normalized['engine_configuration'].append({
                 'source': source_id,
@@ -122,7 +191,9 @@ def normalize(raw_records: list[dict], config: dict) -> tuple[list[dict], list[d
                     'serial_to':   serial_to,
                 },
             })
+
     else:
+        # Modo estático: Yamaha single PDF, Volvo single — engine_configuration fija del config
         normalized['engine_configuration'].append({
             'source': source_id,
             'record_type': 'engine_configuration',
