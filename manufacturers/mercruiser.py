@@ -187,7 +187,6 @@ def _extract_variant(page, variant_href, engine_model_name, source_id):
 
 def extract_mercruiser(page, config):
     source_id = config["source_id"]
-    all_records = []
     n_cats = len(CATEGORIES)
 
     _max_families = config.get("_test_max_families")  # solo para validación, no usar en producción
@@ -207,12 +206,15 @@ def extract_mercruiser(page, config):
             n_var = len(variants)
             print(f"      Variantes: {n_var}")
 
+            family_records = []
             for var_idx, (var_href, var_name) in enumerate(variants, 1):
-                print(f"      Variante {var_idx}/{n_var}: {var_name} — acumulado: {len(all_records)}")
+                print(f"      Variante {var_idx}/{n_var}: {var_name}")
                 recs = _extract_variant(page, var_href, var_name, source_id)
-                all_records.extend(recs)
+                print(f"        {len(recs)} registros")
+                family_records.extend(recs)
 
-    return all_records
+            print(f"    → Familia completa: {len(family_records)} registros")
+            yield family_records
 
 
 ADAPTER = WebAdapter

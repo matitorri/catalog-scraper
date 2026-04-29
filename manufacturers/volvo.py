@@ -147,7 +147,6 @@ def _extract_product(page, product_path, engine_model_name, source_id):
 
 def extract_volvo(page, config):
     source_id = config["source_id"]
-    all_records = []
 
     # Warm-up: la app Blazor requiere al menos una navegación a un producto
     # para inicializar el estado de sesión antes de poder usar los listings
@@ -172,12 +171,10 @@ def extract_volvo(page, config):
             products = products[:_max_per_cat]
 
         for prod_idx, (engine_model_name, product_path) in enumerate(products, 1):
-            print(f"    [{prod_idx}/{n_prod}] {engine_model_name} — acumulado: {len(all_records)}", end="", flush=True)
+            print(f"    [{prod_idx}/{n_prod}] {engine_model_name}", end="", flush=True)
             records = _extract_product(page, product_path, engine_model_name, source_id)
             print(f" → {len(records)} partes")
-            all_records.extend(records)
-
-    return all_records
+            yield records
 
 
 ADAPTER = WebAdapter
